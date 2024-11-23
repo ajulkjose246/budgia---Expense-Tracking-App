@@ -1,4 +1,5 @@
 import 'package:budgia/screens/dash_screen.dart';
+import 'package:budgia/screens/statistics_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -14,7 +15,7 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pages = [
     const DashScreen(),
-    const Center(child: Text('Statistics')),
+    const StatisticsScreen(),
     const Center(child: Text('Wallet')),
     const Center(child: Text('Profile')),
   ];
