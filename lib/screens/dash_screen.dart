@@ -7,6 +7,7 @@ import 'package:budgia/providers/accounts_provider.dart';
 import 'package:hive/hive.dart';
 import 'package:budgia/models/category_model.dart';
 import 'package:budgia/utils/currency_utils.dart';
+import 'package:budgia/l10n/app_localizations.dart';
 
 class DashScreen extends StatefulWidget {
   const DashScreen({super.key});
@@ -72,6 +73,7 @@ class _DashScreenState extends State<DashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     final List<Map<String, dynamic>> accountIcons = [
       {'icon': Icons.account_balance, 'color': Colors.blue},
       {'icon': Icons.credit_card, 'color': Colors.green},
@@ -110,7 +112,7 @@ class _DashScreenState extends State<DashScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Welcome back',
+                          localizations.welcomeBack,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.7),
                             fontSize: 14,
@@ -202,14 +204,14 @@ class _DashScreenState extends State<DashScreen> {
                             children: [
                               _buildBalanceItem(
                                 icon: Icons.arrow_upward,
-                                label: 'Income',
+                                label: localizations.income,
                                 amount:
                                     '+$_currencySymbol${_calculateIncome().toStringAsFixed(2)}',
                                 iconColor: Colors.green,
                               ),
                               _buildBalanceItem(
                                 icon: Icons.arrow_downward,
-                                label: 'Expenses',
+                                label: localizations.expenses,
                                 amount:
                                     '-$_currencySymbol${_calculateExpenses().toStringAsFixed(2)}',
                                 iconColor: Colors.red,
@@ -228,9 +230,9 @@ class _DashScreenState extends State<DashScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Accounts',
-                      style: TextStyle(
+                    Text(
+                      localizations.accounts,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -257,8 +259,8 @@ class _DashScreenState extends State<DashScreen> {
                                       color: Colors.blue.withOpacity(0.2),
                                     ),
                                   ),
-                                  title: const Text(
-                                    'Add New Account',
+                                  title: Text(
+                                    localizations.addNewAccount,
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 20,
@@ -280,8 +282,8 @@ class _DashScreenState extends State<DashScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text(
-                                            'Choose Icon',
+                                          Text(
+                                            localizations.chooseIcon,
                                             style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 16,
@@ -357,10 +359,11 @@ class _DashScreenState extends State<DashScreen> {
                                           const SizedBox(height: 20),
                                           TextField(
                                             controller: accountNameController,
-                                            style: const TextStyle(
-                                                color: Colors.white),
+                                            style:
+                                                TextStyle(color: Colors.white),
                                             decoration: InputDecoration(
-                                              hintText: 'Account Name',
+                                              hintText:
+                                                  localizations.accountName,
                                               hintStyle: TextStyle(
                                                   color: Colors.white
                                                       .withOpacity(0.5)),
@@ -381,11 +384,12 @@ class _DashScreenState extends State<DashScreen> {
                                           const SizedBox(height: 16),
                                           TextField(
                                             controller: balanceController,
-                                            style: const TextStyle(
-                                                color: Colors.white),
+                                            style:
+                                                TextStyle(color: Colors.white),
                                             keyboardType: TextInputType.number,
                                             decoration: InputDecoration(
-                                              hintText: 'Initial Balance',
+                                              hintText:
+                                                  localizations.initialBalance,
                                               hintStyle: TextStyle(
                                                   color: Colors.white
                                                       .withOpacity(0.5)),
@@ -414,7 +418,7 @@ class _DashScreenState extends State<DashScreen> {
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
                                       child: Text(
-                                        'Cancel',
+                                        localizations.cancel,
                                         style: TextStyle(
                                             color: Colors.blue.shade300),
                                       ),
@@ -465,9 +469,9 @@ class _DashScreenState extends State<DashScreen> {
                                           // Optionally show success message
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
-                                            const SnackBar(
-                                                content: Text(
-                                                    'Account added successfully')),
+                                            SnackBar(
+                                                content: Text(localizations
+                                                    .accountAddedSuccess)),
                                           );
                                         }
                                       },
@@ -478,7 +482,7 @@ class _DashScreenState extends State<DashScreen> {
                                               BorderRadius.circular(12),
                                         ),
                                       ),
-                                      child: const Text('Add Account'),
+                                      child: Text(localizations.addAccount),
                                     ),
                                   ],
                                 );
@@ -517,9 +521,10 @@ class _DashScreenState extends State<DashScreen> {
                           final accounts = accountsProvider.accounts;
 
                           if (accounts.isEmpty) {
-                            return const Text(
-                              'No accounts yet',
-                              style: TextStyle(color: Colors.white),
+                            return Text(
+                              localizations
+                                  .noAccountsYet, // Changed from 'No accounts yet'
+                              style: const TextStyle(color: Colors.white),
                             );
                           }
 
@@ -551,12 +556,15 @@ class _DashScreenState extends State<DashScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Recent Transactions',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Text(
+                        localizations.recentTransactions,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     TextButton(
@@ -564,7 +572,7 @@ class _DashScreenState extends State<DashScreen> {
                         Navigator.pushNamed(context, '/transaction-history');
                       },
                       child: Text(
-                        'See All',
+                        localizations.seeAll,
                         style: TextStyle(
                           color: Colors.blue.shade300,
                         ),
@@ -575,7 +583,7 @@ class _DashScreenState extends State<DashScreen> {
                 const SizedBox(height: 16),
                 if (_recentTransactions.isEmpty)
                   Text(
-                    'No recent transactions',
+                    localizations.noRecentTransactions,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.7),
                       fontSize: 16,
@@ -611,44 +619,50 @@ class _DashScreenState extends State<DashScreen> {
     required String amount,
     required Color iconColor,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.2),
-              shape: BoxShape.circle,
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
             ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 13,
-                ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 13,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    amount,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-              Text(
-                amount,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -701,6 +715,8 @@ class _DashScreenState extends State<DashScreen> {
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
               InkWell(
@@ -780,6 +796,7 @@ class _DashScreenState extends State<DashScreen> {
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 16),
           // Action Buttons
@@ -891,6 +908,7 @@ class _DashScreenState extends State<DashScreen> {
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   subtitle,
@@ -898,10 +916,13 @@ class _DashScreenState extends State<DashScreen> {
                     color: Colors.white.withOpacity(0.5),
                     fontSize: 13,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Text(
             amount,
             style: const TextStyle(

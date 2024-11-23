@@ -48,6 +48,7 @@ dependencies:
   fl_chart: ^0.69.2
   shared_preferences: ^2.3.3
   local_auth: ^2.3.0
+  flutter_localization: ^0.2.2
 
 dev_dependencies:
   flutter_test:

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:budgia/models/category_model.dart';
 import 'package:budgia/utils/currency_utils.dart';
+import 'package:budgia/l10n/app_localizations.dart';
 
 class TransactionPage extends StatefulWidget {
   final bool isExpense;
@@ -120,12 +121,13 @@ class _TransactionPageState extends State<TransactionPage> {
       builder: (BuildContext context) {
         String categoryInput = '';
         IconData selectedIcon = Icons.category;
+        final localizations = AppLocalizations.of(context);
 
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
               backgroundColor: const Color(0xFF0A0E21),
-              title: const Text('Add New Category',
+              title: Text(localizations.addNewCategory,
                   style: TextStyle(color: Colors.white)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -134,7 +136,7 @@ class _TransactionPageState extends State<TransactionPage> {
                     style: const TextStyle(color: Colors.white),
                     onChanged: (value) => categoryInput = value,
                     decoration: InputDecoration(
-                      hintText: 'Category name',
+                      hintText: localizations.categoryName,
                       hintStyle:
                           TextStyle(color: Colors.white.withOpacity(0.5)),
                       enabledBorder: UnderlineInputBorder(
@@ -174,7 +176,7 @@ class _TransactionPageState extends State<TransactionPage> {
               ),
               actions: [
                 TextButton(
-                  child: const Text('Cancel'),
+                  child: Text(localizations.cancel),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 TextButton(
@@ -222,13 +224,15 @@ class _TransactionPageState extends State<TransactionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E21),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          '${widget.isExpense ? 'New Expense' : 'New Income'} - ${widget.accountLabel}',
+          widget.isExpense ? localizations.newExpense : localizations.newIncome,
           style: const TextStyle(color: Colors.white),
         ),
         leading: IconButton(
@@ -280,7 +284,7 @@ class _TransactionPageState extends State<TransactionPage> {
 
             // Category Selection
             Text(
-              'Category',
+              localizations.category,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.7),
                 fontSize: 16,
@@ -304,7 +308,7 @@ class _TransactionPageState extends State<TransactionPage> {
                         style:
                             const TextStyle(color: Colors.white, fontSize: 16),
                         hint: Text(
-                          'Select Category',
+                          localizations.selectCategory,
                           style:
                               TextStyle(color: Colors.white.withOpacity(0.5)),
                         ),
@@ -341,7 +345,7 @@ class _TransactionPageState extends State<TransactionPage> {
 
             // Note Field
             Text(
-              'Note',
+              localizations.note,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.7),
                 fontSize: 16,
@@ -360,7 +364,7 @@ class _TransactionPageState extends State<TransactionPage> {
                 style: const TextStyle(color: Colors.white),
                 maxLines: 3,
                 decoration: InputDecoration(
-                  hintText: 'Add note',
+                  hintText: localizations.addNote,
                   hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
                   border: InputBorder.none,
                 ),
@@ -370,7 +374,7 @@ class _TransactionPageState extends State<TransactionPage> {
 
             // Date Selection
             Text(
-              'Date',
+              localizations.date,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.7),
                 fontSize: 16,
@@ -521,7 +525,9 @@ class _TransactionPageState extends State<TransactionPage> {
               ),
             ),
             child: Text(
-              widget.isExpense ? 'Add Expense' : 'Add Income',
+              widget.isExpense
+                  ? localizations.newExpense
+                  : localizations.newIncome,
               style: const TextStyle(fontSize: 16),
             ),
           ),

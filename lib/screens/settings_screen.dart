@@ -1,3 +1,4 @@
+import 'package:budgia/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -6,6 +7,7 @@ import 'package:budgia/models/account_model.dart';
 import 'package:budgia/services/storage_service.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:budgia/l10n/app_localizations.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -17,6 +19,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _systemLockEnabled = false;
   String _selectedCurrency = 'USD';
+  String _selectedLanguage = 'en';
   final LocalAuthentication _localAuth = LocalAuthentication();
   bool _canCheckBiometrics = false;
   List<BiometricType> _availableBiometrics = [];
@@ -45,6 +48,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ];
 
   static const String currencyPrefsKey = 'selected_currency';
+  static const String languagePrefsKey = 'selected_language';
+
+  final List<Map<String, String>> _languages = [
+    {'code': 'en', 'name': 'English'},
+    {'code': 'es', 'name': 'Español'},
+    {'code': 'fr', 'name': 'Français'},
+    {'code': 'ml', 'name': 'മലയാളം'},
+  ];
 
   @override
   void initState() {
@@ -52,6 +63,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadSavedCurrency();
     _loadSystemLockState();
     _checkBiometricSupport();
+    _loadSavedLanguage();
   }
 
   Future<void> _loadSavedCurrency() async {
@@ -88,8 +100,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _loadSavedLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _selectedLanguage = prefs.getString(languagePrefsKey) ?? 'en';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -107,9 +128,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text(
-            'Settings',
-            style: TextStyle(
+          automaticallyImplyLeading: false,
+          title: Text(
+            localizations.settings,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -119,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         body: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            _buildSectionHeader('Security'),
+            _buildSectionHeader(localizations.security),
             Container(
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.05),
@@ -129,12 +151,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               child: SwitchListTile(
-                title: const Text(
-                  'System Lock',
-                  style: TextStyle(color: Colors.white),
+                title: Text(
+                  localizations.systemLock,
+                  style: const TextStyle(color: Colors.white),
                 ),
                 subtitle: Text(
-                  'Require password to open app',
+                  localizations.requirePassword,
                   style: TextStyle(color: Colors.white.withOpacity(0.5)),
                 ),
                 value: _systemLockEnabled,
@@ -198,7 +220,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            _buildSectionHeader('Preferences'),
+            _buildSectionHeader(localizations.preferences),
             Container(
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.05),
@@ -208,12 +230,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               child: ListTile(
-                title: const Text(
-                  'Currency',
-                  style: TextStyle(color: Colors.white),
+                title: Text(
+                  localizations.currency,
+                  style: const TextStyle(color: Colors.white),
                 ),
                 subtitle: Text(
-                  'Selected: $_selectedCurrency',
+                  '${localizations.selected}: $_selectedCurrency',
                   style: TextStyle(color: Colors.white.withOpacity(0.5)),
                 ),
                 trailing: Icon(
@@ -224,8 +246,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: () => _showCurrencyPicker(),
               ),
             ),
+            const SizedBox(height: 15),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.1),
+                ),
+              ),
+              child: ListTile(
+                title: Text(
+                  localizations.language,
+                  style: const TextStyle(color: Colors.white),
+                ),
+                subtitle: Text(
+                  '${localizations.selected}: ${_languages.firstWhere(
+                    (lang) => lang['code'] == _selectedLanguage,
+                    orElse: () => {'code': 'en', 'name': 'English'},
+                  )['name']}',
+                  style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                ),
+                trailing: Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withOpacity(0.5),
+                  size: 16,
+                ),
+                onTap: () => _showLanguagePicker(),
+              ),
+            ),
             const SizedBox(height: 24),
-            _buildSectionHeader('Data Management'),
+            _buildSectionHeader(localizations.dataManagement),
             Container(
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.05),
@@ -243,15 +294,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   child: Icon(Icons.delete_forever, color: Colors.red.shade300),
                 ),
-                title: const Text(
-                  'Erase All Data',
+                title: Text(
+                  localizations.eraseAllData,
                   style: TextStyle(
                     color: Colors.red,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 subtitle: Text(
-                  'This action cannot be undone',
+                  localizations.cannotBeUndone,
                   style: TextStyle(color: Colors.white.withOpacity(0.5)),
                 ),
                 onTap: () => _showEraseConfirmationDialog(),
@@ -278,6 +329,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showCurrencyPicker() {
+    final localizations = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -289,8 +341,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: Colors.blue.withOpacity(0.2),
             ),
           ),
-          title: const Text(
-            'Select Currency',
+          title: Text(
+            localizations.selectCurrency,
             style: TextStyle(color: Colors.white),
           ),
           content: SizedBox(
@@ -324,7 +376,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _showLanguagePicker() {
+    final localizations = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF0A0E21),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: Colors.blue.withOpacity(0.2),
+            ),
+          ),
+          title: Text(
+            localizations.selectLanguage,
+            style: TextStyle(color: Colors.white),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _languages.length,
+              itemBuilder: (context, index) {
+                final language = _languages[index];
+                return ListTile(
+                  title: Text(
+                    language['name']!,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  trailing: _selectedLanguage == language['code']
+                      ? Icon(Icons.check, color: Colors.blue.shade300)
+                      : null,
+                  onTap: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString(languagePrefsKey, language['code']!);
+
+                    setState(() => _selectedLanguage = language['code']!);
+
+                    // Rebuild the entire app with new locale
+                    if (context.mounted) {
+                      final state =
+                          context.findAncestorStateOfType<MyAppState>();
+                      state?.setLocale(Locale(language['code']!));
+                    }
+
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showEraseConfirmationDialog() {
+    final localizations = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -336,13 +445,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: Colors.red.withOpacity(0.2),
             ),
           ),
-          title: const Text(
-            'Erase All Data',
-            style: TextStyle(color: Colors.red),
+          title: Text(
+            localizations.eraseAllData,
+            style: const TextStyle(color: Colors.red),
           ),
-          content: const Text(
-            'This action will permanently delete all your data. This cannot be undone. Are you sure?',
-            style: TextStyle(color: Colors.white),
+          content: Text(
+            localizations.cannotBeUndone,
+            style: const TextStyle(color: Colors.white),
           ),
           actions: [
             TextButton(

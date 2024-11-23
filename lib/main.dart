@@ -9,6 +9,9 @@ import 'package:budgia/models/account_model.dart';
 import 'package:provider/provider.dart';
 import 'package:budgia/providers/accounts_provider.dart';
 import 'package:budgia/models/category_model.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:budgia/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,15 +31,39 @@ void main() async {
   runApp(
     ChangeNotifierProvider(
       create: (_) => AccountsProvider(),
-      child: const MyApp(),
+      child: MyApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  @override
+  State<MyApp> createState() => MyAppState();
+}
 
-  // This widget is the root of your application.
+class MyAppState extends State<MyApp> {
+  Locale _locale = const Locale('en');
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedLanguage();
+  }
+
+  Future<void> _loadSavedLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String languageCode = prefs.getString('selected_language') ?? 'en';
+    setState(() {
+      _locale = Locale(languageCode);
+    });
+  }
+
+  void setLocale(Locale newLocale) {
+    setState(() {
+      _locale = newLocale;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -48,6 +75,20 @@ class MyApp extends StatelessWidget {
         '/auth': (context) => const AuthPage(),
       }),
       initialRoute: '/auth',
+      locale: _locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('es'),
+        Locale('fr'),
+        Locale('ml'),
+        // Add more supported locales
+      ],
     );
   }
 }

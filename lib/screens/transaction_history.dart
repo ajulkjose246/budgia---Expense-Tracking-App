@@ -1,3 +1,4 @@
+import 'package:budgia/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:budgia/services/storage_service.dart';
 import 'package:budgia/models/transaction_model.dart';
@@ -149,6 +150,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E21),
       body: Container(
@@ -179,8 +181,8 @@ class _TransactionHistoryState extends State<TransactionHistory> {
                               const Icon(Icons.arrow_back, color: Colors.white),
                           onPressed: () => Navigator.pop(context),
                         ),
-                        const Text(
-                          'Transaction History',
+                        Text(
+                          localizations.transactionHistory,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,

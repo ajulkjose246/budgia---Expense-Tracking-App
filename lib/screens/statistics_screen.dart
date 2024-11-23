@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:budgia/services/storage_service.dart';
 import 'package:budgia/utils/currency_utils.dart';
+import 'package:budgia/l10n/app_localizations.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -167,6 +168,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -191,12 +194,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Statistics',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                  Flexible(
+                    child: Text(
+                      localizations.statistics,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   _buildTimeRangeSelector(),
@@ -210,7 +216,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 children: [
                   Expanded(
                     child: _buildSummaryCard(
-                      title: 'Income',
+                      title: localizations.income,
                       amount: _calculateTotalIncome(),
                       icon: Icons.arrow_upward,
                       color: Colors.green.shade400,
@@ -219,7 +225,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildSummaryCard(
-                      title: 'Expenses',
+                      title: localizations.expenses,
                       amount: _calculateTotalExpenses(),
                       icon: Icons.arrow_downward,
                       color: Colors.red.shade400,
@@ -232,9 +238,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
               // Income vs Expenses Chart
               _buildChartContainer(
-                title: 'Income vs Expenses',
-                subtitle:
-                    'Last ${_selectedTimeRange == '30D' ? '30' : '7'} days',
+                title: localizations.incomeVsExpenses,
+                subtitle: _selectedTimeRange == '30D'
+                    ? localizations.last30Days
+                    : localizations.last7Days,
                 height: 300,
                 child: Stack(
                   children: [
@@ -252,8 +259,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
               // Category Distribution
               _buildChartContainer(
-                title: 'Spending by Category',
-                subtitle: 'Distribution of expenses',
+                title: localizations.spendingByCategory,
+                subtitle: localizations.distributionOfExpenses,
                 height: 400,
                 child: Column(
                   children: [
@@ -341,6 +348,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildChartLegend() {
+    final localizations = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -350,9 +358,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildLegendItem('Income', Colors.green.shade300),
+          _buildLegendItem(localizations.income, Colors.green.shade300),
           const SizedBox(width: 16),
-          _buildLegendItem('Expenses', Colors.red.shade300),
+          _buildLegendItem(localizations.expenses, Colors.red.shade300),
         ],
       ),
     );
