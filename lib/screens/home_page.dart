@@ -1,4 +1,5 @@
 import 'package:budgia/screens/dash_screen.dart';
+import 'package:budgia/screens/settings_screen.dart';
 import 'package:budgia/screens/statistics_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -16,8 +17,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     const DashScreen(),
     const StatisticsScreen(),
-    const Center(child: Text('Wallet')),
-    const Center(child: Text('Profile')),
+    const SettingsScreen(),
   ];
 
   @override
@@ -77,12 +77,8 @@ class _HomePageState extends State<HomePage> {
               label: 'Statistics',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance_wallet_rounded),
-              label: 'Wallet',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline_rounded),
-              label: 'Profile',
+              icon: Icon(Icons.settings),
+              label: 'Settings',
             ),
           ],
         ),

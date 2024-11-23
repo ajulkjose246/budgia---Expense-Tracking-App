@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:budgia/services/storage_service.dart';
+import 'package:budgia/utils/currency_utils.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -15,11 +16,20 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   List<FlSpot> _weeklyExpenseSpots = [];
   List<FlSpot> _weeklyIncomeSpots = [];
   String _selectedTimeRange = '7D'; // Default time range
+  String _currencySymbol = '\$';
 
   @override
   void initState() {
     super.initState();
+    _loadCurrencySymbol();
     _loadTransactionData();
+  }
+
+  Future<void> _loadCurrencySymbol() async {
+    final symbol = await CurrencyUtils.getSelectedCurrencySymbol();
+    setState(() {
+      _currencySymbol = symbol;
+    });
   }
 
   void _loadTransactionData() {
@@ -111,30 +121,41 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         mainAxisSize: MainAxisSize.min,
         children: ['7D', '30D'].map((range) {
           final isSelected = _selectedTimeRange == range;
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.blue.shade700 : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: Colors.blue.shade700.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        )
-                      ]
-                    : null,
-              ),
-              child: Text(
-                range,
-                style: TextStyle(
-                  color:
-                      isSelected ? Colors.white : Colors.white.withOpacity(0.7),
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedTimeRange = range;
+                _loadTransactionData();
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.blue.shade700 : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.blue.shade700.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  range,
+                  style: TextStyle(
+                    color: isSelected
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.7),
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
                 ),
               ),
             ),
@@ -217,86 +238,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 height: 300,
                 child: Stack(
                   children: [
-                    LineChart(
-                      LineChartData(
-                        gridData: FlGridData(
-                          show: true,
-                          drawVerticalLine: false,
-                          horizontalInterval: 100,
-                          getDrawingHorizontalLine: (value) {
-                            return FlLine(
-                              color: Colors.white.withOpacity(0.1),
-                              strokeWidth: 1,
-                            );
-                          },
-                        ),
-                        titlesData: FlTitlesData(
-                          show: true,
-                          rightTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
-                          topTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              getTitlesWidget: (value, meta) {
-                                if (value % 5 == 0) {
-                                  return Text(
-                                    '${value.toInt()}d',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.5),
-                                      fontSize: 12,
-                                    ),
-                                  );
-                                }
-                                return const Text('');
-                              },
-                            ),
-                          ),
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              getTitlesWidget: (value, meta) {
-                                return Text(
-                                  '\$${value.toInt()}',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.5),
-                                    fontSize: 12,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        borderData: FlBorderData(show: false),
-                        lineBarsData: [
-                          // Income line
-                          LineChartBarData(
-                            spots: _weeklyIncomeSpots,
-                            isCurved: true,
-                            color: Colors.green.shade300,
-                            barWidth: 3,
-                            dotData: FlDotData(show: false),
-                            belowBarData: BarAreaData(
-                              show: true,
-                              color: Colors.green.shade700.withOpacity(0.2),
-                            ),
-                          ),
-                          // Expense line
-                          LineChartBarData(
-                            spots: _weeklyExpenseSpots,
-                            isCurved: true,
-                            color: Colors.red.shade300,
-                            barWidth: 3,
-                            dotData: FlDotData(show: false),
-                            belowBarData: BarAreaData(
-                              show: true,
-                              color: Colors.red.shade700.withOpacity(0.2),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    LineChart(_getLineChartData()),
                     Positioned(
                       top: 0,
                       right: 0,
@@ -386,7 +328,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            '\$${amount.toStringAsFixed(2)}',
+            '$_currencySymbol${amount.toStringAsFixed(2)}',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -483,7 +425,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 ),
               ),
               Text(
-                '\$${entry.value.toStringAsFixed(2)}',
+                '$_currencySymbol${entry.value.toStringAsFixed(2)}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
@@ -513,12 +455,150 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     return _weeklyExpenseSpots.fold(0.0, (sum, spot) => sum + spot.y);
   }
 
+  LineChartData _getLineChartData() {
+    final daysToShow = _selectedTimeRange == '30D' ? 30 : 7;
+
+    return LineChartData(
+      gridData: FlGridData(
+        show: true,
+        drawVerticalLine: false,
+        horizontalInterval: 100,
+        getDrawingHorizontalLine: (value) {
+          return FlLine(
+            color: Colors.white.withOpacity(0.1),
+            strokeWidth: 1,
+          );
+        },
+      ),
+      titlesData: FlTitlesData(
+        show: true,
+        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            interval: _selectedTimeRange == '30D' ? 5 : 1,
+            getTitlesWidget: (value, meta) {
+              if (value % (_selectedTimeRange == '30D' ? 5 : 1) == 0) {
+                return Text(
+                  '${value.toInt()}d',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                  ),
+                );
+              }
+              return const Text('');
+            },
+          ),
+        ),
+        leftTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            getTitlesWidget: (value, meta) {
+              return Text(
+                '$_currencySymbol${value.toInt()}',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 12,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+      borderData: FlBorderData(show: false),
+      minX: 0,
+      maxX: daysToShow.toDouble() - 1,
+      lineBarsData: [
+        // Income line
+        LineChartBarData(
+          spots: _weeklyIncomeSpots,
+          isCurved: true,
+          color: Colors.green.shade300,
+          barWidth: 3,
+          dotData: FlDotData(show: false),
+          belowBarData: BarAreaData(
+            show: true,
+            color: Colors.green.shade700.withOpacity(0.2),
+          ),
+        ),
+        // Expense line
+        LineChartBarData(
+          spots: _weeklyExpenseSpots,
+          isCurved: true,
+          color: Colors.red.shade300,
+          barWidth: 3,
+          dotData: FlDotData(show: false),
+          belowBarData: BarAreaData(
+            show: true,
+            color: Colors.red.shade700.withOpacity(0.2),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildChartContainer({
     required String title,
     required String subtitle,
     required double height,
     required Widget child,
   }) {
+    if (title == 'Income vs Expenses') {
+      return Container(
+        height: height,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.blue.shade800.withOpacity(0.2),
+              Colors.indigo.shade900.withOpacity(0.2),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.blue.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Stack(
+                children: [
+                  LineChart(_getLineChartData()),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: _buildChartLegend(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       height: height,
       padding: const EdgeInsets.all(20),

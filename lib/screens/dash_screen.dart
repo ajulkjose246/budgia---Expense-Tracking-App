@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:budgia/providers/accounts_provider.dart';
 import 'package:hive/hive.dart';
 import 'package:budgia/models/category_model.dart';
+import 'package:budgia/utils/currency_utils.dart';
 
 class DashScreen extends StatefulWidget {
   const DashScreen({super.key});
@@ -19,6 +20,7 @@ class _DashScreenState extends State<DashScreen> {
   List<Transaction> _recentTransactions = [];
   List<Transaction> _allTransactions = [];
   Map<String, IconData> _categoryIcons = {};
+  String _currencySymbol = '\$';
 
   @override
   void initState() {
@@ -27,6 +29,7 @@ class _DashScreenState extends State<DashScreen> {
       context.read<AccountsProvider>().loadAccounts();
       _loadTransactions();
       _loadCategoryIcons();
+      _loadCurrencySymbol();
     });
   }
 
@@ -58,6 +61,13 @@ class _DashScreenState extends State<DashScreen> {
     return _allTransactions
         .where((t) => t.isExpense)
         .fold(0.0, (sum, t) => sum + t.amount);
+  }
+
+  Future<void> _loadCurrencySymbol() async {
+    final symbol = await CurrencyUtils.getSelectedCurrencySymbol();
+    setState(() {
+      _currencySymbol = symbol;
+    });
   }
 
   @override
@@ -178,7 +188,7 @@ class _DashScreenState extends State<DashScreen> {
                         children: [
                           const SizedBox(height: 12),
                           Text(
-                            '\$${totalBalance.toStringAsFixed(2)}',
+                            '$_currencySymbol${totalBalance.toStringAsFixed(2)}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 32,
@@ -194,14 +204,14 @@ class _DashScreenState extends State<DashScreen> {
                                 icon: Icons.arrow_upward,
                                 label: 'Income',
                                 amount:
-                                    '+\$${_calculateIncome().toStringAsFixed(2)}',
+                                    '+$_currencySymbol${_calculateIncome().toStringAsFixed(2)}',
                                 iconColor: Colors.green,
                               ),
                               _buildBalanceItem(
                                 icon: Icons.arrow_downward,
                                 label: 'Expenses',
                                 amount:
-                                    '-\$${_calculateExpenses().toStringAsFixed(2)}',
+                                    '-$_currencySymbol${_calculateExpenses().toStringAsFixed(2)}',
                                 iconColor: Colors.red,
                               ),
                             ],
@@ -391,7 +401,7 @@ class _DashScreenState extends State<DashScreen> {
                                                   const EdgeInsets.symmetric(
                                                       horizontal: 16,
                                                       vertical: 14),
-                                              prefixText: '\$ ',
+                                              prefixText: '$_currencySymbol ',
                                               prefixStyle: const TextStyle(
                                                   color: Colors.white),
                                             ),
@@ -523,7 +533,7 @@ class _DashScreenState extends State<DashScreen> {
                                   label: account.name,
                                   color: Color(account.colorValue),
                                   amount:
-                                      '\$${account.balance.toStringAsFixed(2)}',
+                                      '$_currencySymbol${account.balance.toStringAsFixed(2)}',
                                   context: context,
                                 ),
                               );
@@ -582,7 +592,7 @@ class _DashScreenState extends State<DashScreen> {
                         title: transaction.category,
                         subtitle: transaction.note,
                         amount: '${transaction.isExpense ? '-' : '+'}'
-                            '\$${transaction.amount.toStringAsFixed(2)}',
+                            '$_currencySymbol${transaction.amount.toStringAsFixed(2)}',
                         iconColor: Color(transaction.categoryColorValue),
                       );
                     }).toList(),

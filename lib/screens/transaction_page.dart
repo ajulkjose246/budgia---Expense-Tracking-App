@@ -5,6 +5,7 @@ import 'package:budgia/providers/accounts_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:budgia/models/category_model.dart';
+import 'package:budgia/utils/currency_utils.dart';
 
 class TransactionPage extends StatefulWidget {
   final bool isExpense;
@@ -40,10 +41,13 @@ class _TransactionPageState extends State<TransactionPage> {
     'Others': Icons.more_horiz,
   };
 
+  String currencySymbol = '\$';
+
   @override
   void initState() {
     super.initState();
     _loadCategories();
+    _loadCurrencySymbol();
   }
 
   Future<void> _loadCategories() async {
@@ -100,6 +104,13 @@ class _TransactionPageState extends State<TransactionPage> {
           fontFamily: 'MaterialIcons',
         );
       }
+    });
+  }
+
+  Future<void> _loadCurrencySymbol() async {
+    final symbol = await CurrencyUtils.getSelectedCurrencySymbol();
+    setState(() {
+      currencySymbol = symbol;
     });
   }
 
@@ -256,7 +267,7 @@ class _TransactionPageState extends State<TransactionPage> {
                   hintText: '0.00',
                   hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
                   border: InputBorder.none,
-                  prefixText: '\$ ',
+                  prefixText: '$currencySymbol ',
                   prefixStyle: TextStyle(
                     color: widget.accountColor,
                     fontSize: 32,
@@ -445,7 +456,7 @@ class _TransactionPageState extends State<TransactionPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                          'Insufficient funds. Available balance: \$${currentBalance.toStringAsFixed(2)}'),
+                          'Insufficient funds. Available balance: $currencySymbol${currentBalance.toStringAsFixed(2)}'),
                       backgroundColor: Colors.red,
                     ),
                   );

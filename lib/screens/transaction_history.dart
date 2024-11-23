@@ -1,11 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:budgia/services/storage_service.dart';
 import 'package:budgia/models/transaction_model.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:budgia/models/category_model.dart';
+import 'package:budgia/utils/currency_utils.dart';
 
 class TransactionHistory extends StatefulWidget {
   const TransactionHistory({super.key});
@@ -18,6 +17,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
   final _storageService = StorageService();
   late List<Transaction> transactions;
   Map<String, IconData> categoryIcons = {};
+  String currencySymbol = '\$';
 
   @override
   void initState() {
@@ -25,6 +25,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     transactions = _storageService.getTransactions()
       ..sort((a, b) => b.date.compareTo(a.date));
     _loadCategoryIcons();
+    _loadCurrencySymbol();
   }
 
   Future<void> _loadCategoryIcons() async {
@@ -35,6 +36,13 @@ class _TransactionHistoryState extends State<TransactionHistory> {
           category.name:
               IconData(category.iconCode, fontFamily: 'MaterialIcons')
       };
+    });
+  }
+
+  Future<void> _loadCurrencySymbol() async {
+    final symbol = await CurrencyUtils.getSelectedCurrencySymbol();
+    setState(() {
+      currencySymbol = symbol;
     });
   }
 
@@ -213,7 +221,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
                       title: transaction.category,
                       subtitle: transaction.note,
                       amount:
-                          '${transaction.isExpense ? '-' : '+'}\$${transaction.amount.toStringAsFixed(2)}',
+                          '${transaction.isExpense ? '-' : '+'}$currencySymbol${transaction.amount.toStringAsFixed(2)}',
                       iconColor: Color(transaction.categoryColorValue),
                       account: transaction.accountName,
                       accountIcon: IconData(transaction.accountIconIndex),

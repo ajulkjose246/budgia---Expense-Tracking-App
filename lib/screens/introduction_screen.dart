@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dotlottie_loader/dotlottie_loader.dart';
 import 'package:lottie/lottie.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class IntroductionScreen extends StatefulWidget {
   const IntroductionScreen({super.key});
@@ -92,8 +93,14 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                     ],
                   ),
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pushReplacementNamed('/home');
+                    onPressed: () async {
+                      // Save that the user has seen the intro
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('hasSeenIntro', true);
+
+                      if (mounted) {
+                        Navigator.of(context).pushReplacementNamed('/home');
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,

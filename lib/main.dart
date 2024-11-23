@@ -1,3 +1,4 @@
+import 'package:budgia/auth/auth_page.dart';
 import 'package:budgia/screens/home_page.dart';
 import 'package:budgia/screens/introduction_screen.dart';
 import 'package:budgia/screens/transaction_history.dart';
@@ -44,7 +45,9 @@ class MyApp extends StatelessWidget {
         '/': (context) => const IntroductionScreen(),
         '/home': (context) => const HomePage(),
         '/transaction-history': (context) => const TransactionHistory(),
+        '/auth': (context) => const AuthPage(),
       }),
+      initialRoute: '/auth',
     );
   }
 }
