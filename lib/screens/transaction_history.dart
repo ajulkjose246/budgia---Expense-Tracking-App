@@ -19,6 +19,8 @@ class _TransactionHistoryState extends State<TransactionHistory> {
   late List<Transaction> transactions;
   Map<String, IconData> categoryIcons = {};
   String currencySymbol = '\$';
+  String _sortBy = 'date'; // Options: 'date', 'amount', 'category'
+  bool _sortAscending = false;
 
   @override
   void initState() {
@@ -191,17 +193,6 @@ class _TransactionHistoryState extends State<TransactionHistory> {
                         ),
                       ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.filter_list,
-                        color: Colors.white,
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -209,6 +200,9 @@ class _TransactionHistoryState extends State<TransactionHistory> {
               // Summary Card
 
               const SizedBox(height: 20),
+
+              // Add sorting options here
+              _buildSortingOptions(),
 
               // Transactions List
               Expanded(
@@ -226,7 +220,8 @@ class _TransactionHistoryState extends State<TransactionHistory> {
                           '${transaction.isExpense ? '-' : '+'}$currencySymbol${transaction.amount.toStringAsFixed(2)}',
                       iconColor: Color(transaction.categoryColorValue),
                       account: transaction.accountName,
-                      accountIcon: IconData(transaction.accountIconIndex),
+                      accountIcon: IconData(transaction.accountIconIndex,
+                          fontFamily: 'MaterialIcons'),
                       accountColor: Color(transaction.accountColorValue),
                     );
                   },
@@ -298,5 +293,87 @@ class _TransactionHistoryState extends State<TransactionHistory> {
         .where((t) => t.isExpense)
         .where((t) => t.date.isAfter(weekAgo))
         .fold(0.0, (sum, t) => sum + t.amount);
+  }
+
+  void _sortTransactions() {
+    setState(() {
+      switch (_sortBy) {
+        case 'date':
+          transactions.sort((a, b) => _sortAscending
+              ? a.date.compareTo(b.date)
+              : b.date.compareTo(a.date));
+        case 'amount':
+          transactions.sort((a, b) => _sortAscending
+              ? a.amount.compareTo(b.amount)
+              : b.amount.compareTo(a.amount));
+        case 'category':
+          transactions.sort((a, b) => _sortAscending
+              ? a.category.compareTo(b.category)
+              : b.category.compareTo(a.category));
+      }
+    });
+  }
+
+  Widget _buildSortingOptions() {
+    final localizations = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Text(
+            localizations.sortBy,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(width: 12),
+          DropdownButton<String>(
+            value: _sortBy,
+            dropdownColor: const Color(0xFF0A0E21),
+            style: const TextStyle(color: Colors.white),
+            underline: Container(
+              height: 1,
+              color: Colors.white.withOpacity(0.3),
+            ),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _sortBy = newValue;
+                  _sortTransactions();
+                });
+              }
+            },
+            items: [
+              DropdownMenuItem(
+                value: 'date',
+                child: Text(localizations.date),
+              ),
+              DropdownMenuItem(
+                value: 'amount',
+                child: Text(localizations.amount),
+              ),
+              DropdownMenuItem(
+                value: 'category',
+                child: Text(localizations.category),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          IconButton(
+            icon: Icon(
+              _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+              color: Colors.white.withOpacity(0.7),
+            ),
+            onPressed: () {
+              setState(() {
+                _sortAscending = !_sortAscending;
+                _sortTransactions();
+              });
+            },
+          ),
+        ],
+      ),
+    );
   }
 }

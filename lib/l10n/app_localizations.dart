@@ -116,6 +116,32 @@ class AppLocalizations {
   String get selectCurrency =>
       _localizedValues[locale.languageCode]!['selectCurrency']!;
   String get home => _localizedValues[locale.languageCode]!['home']!;
+  String get Shopping => _localizedValues[locale.languageCode]!['Shopping']!;
+  String get foodAndDrinks =>
+      _localizedValues[locale.languageCode]!['Food & Drinks']!;
+  String get Transportation =>
+      _localizedValues[locale.languageCode]!['Transportation']!;
+  String get Entertainment =>
+      _localizedValues[locale.languageCode]!['Entertainment']!;
+  String get billsAndUtilities =>
+      _localizedValues[locale.languageCode]!['BillsAndUtilities']!;
+  String get Others => _localizedValues[locale.languageCode]!['Others']!;
+  String get backupData =>
+      _localizedValues[locale.languageCode]!['backupData']!;
+  String get restoreData =>
+      _localizedValues[locale.languageCode]!['restoreData']!;
+  String get exportData =>
+      _localizedValues[locale.languageCode]!['exportData']!;
+  String get importData =>
+      _localizedValues[locale.languageCode]!['importData']!;
+  String get biometricNotAvailable =>
+      _localizedValues[locale.languageCode]!['biometricNotAvailable']!;
+  String get salary => _localizedValues[locale.languageCode]!['salary']!;
+  String get investment =>
+      _localizedValues[locale.languageCode]!['investment']!;
+  String get gift => _localizedValues[locale.languageCode]!['gift']!;
+  String get sortBy => _localizedValues[locale.languageCode]!['sortBy']!;
+  String get amount => _localizedValues[locale.languageCode]!['amount']!;
 }
 
 class _AppLocalizationsDelegate

@@ -58,6 +58,17 @@ final Map<String, String> es = {
   'Food & Drinks': 'Comida y Bebidas',
   'Transportation': 'Transporte',
   'Entertainment': 'Entretenimiento',
-  'Bills & Utilities': 'Facturas y Servicios',
+  'BillsAndUtilities': 'Facturas y Servicios',
   'Others': 'Otros',
+  'backupData': 'Copia de Seguridad',
+  'restoreData': 'Restaurar Datos',
+  'exportData': 'Exportar todos los datos a un archivo',
+  'importData': 'Importar datos desde archivo de respaldo',
+  'biometricNotAvailable':
+      'La autenticación biométrica no está disponible en este dispositivo',
+  'salary': 'Salario',
+  'investment': 'Inversión',
+  'gift': 'Regalo',
+  'sortBy': 'Ordenar por',
+  'amount': 'Cantidad',
 };

@@ -14,7 +14,7 @@ import 'package:budgia/utils/language_utils.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:encrypt/encrypt.dart' as encrypt;
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -127,73 +127,85 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: Colors.white.withOpacity(0.1),
                 ),
               ),
-              child: SwitchListTile(
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.fingerprint, color: Colors.blue.shade300),
+                ),
                 title: Text(
                   localizations.systemLock,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 subtitle: Text(
                   localizations.requirePassword,
                   style: TextStyle(color: Colors.white.withOpacity(0.5)),
                 ),
-                value: _systemLockEnabled,
-                onChanged: (value) async {
-                  if (!_canCheckBiometrics) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            'Biometric authentication not available on this device'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
-                  try {
-                    final authenticated = await _localAuth.authenticate(
-                      localizedReason: value
-                          ? 'Please authenticate to enable system lock'
-                          : 'Please authenticate to disable system lock',
-                      options: const AuthenticationOptions(
-                        stickyAuth: true,
-                        biometricOnly: false,
-                        useErrorDialogs: true,
-                      ),
-                    );
-
-                    if (authenticated) {
-                      setState(() => _systemLockEnabled = value);
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setBool('system_lock_enabled', value);
-
+                trailing: Switch(
+                  value: _systemLockEnabled,
+                  onChanged: (value) async {
+                    if (!_canCheckBiometrics) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(value
-                              ? 'System lock enabled successfully'
-                              : 'System lock disabled successfully'),
-                          backgroundColor: Colors.green,
+                          content: Text(localizations.biometricNotAvailable),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    try {
+                      final authenticated = await _localAuth.authenticate(
+                        localizedReason: value
+                            ? 'Please authenticate to enable system lock'
+                            : 'Please authenticate to disable system lock',
+                        options: const AuthenticationOptions(
+                          stickyAuth: true,
+                          biometricOnly: false,
+                          useErrorDialogs: true,
+                        ),
+                      );
+
+                      if (authenticated) {
+                        setState(() => _systemLockEnabled = value);
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('system_lock_enabled', value);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(value
+                                ? 'System lock enabled successfully'
+                                : 'System lock disabled successfully'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    } on PlatformException catch (e) {
+                      print('Authentication error: ${e.message}');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Authentication error: ${e.message}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    } catch (e) {
+                      print('Generic error: $e');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('An error occurred: $e'),
+                          backgroundColor: Colors.red,
                         ),
                       );
                     }
-                  } on PlatformException catch (e) {
-                    print('Authentication error: ${e.message}');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Authentication error: ${e.message}'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  } catch (e) {
-                    print('Generic error: $e');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('An error occurred: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                },
-                activeColor: Colors.blue.shade300,
+                  },
+                  activeColor: Colors.blue.shade300,
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -206,50 +218,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: Colors.white.withOpacity(0.1),
                 ),
               ),
-              child: ListTile(
-                title: Text(
-                  localizations.currency,
-                  style: const TextStyle(color: Colors.white),
-                ),
-                subtitle: Text(
-                  '${localizations.selected}: $_selectedCurrency',
-                  style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                ),
-                trailing: Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white.withOpacity(0.5),
-                  size: 16,
-                ),
-                onTap: () => _showCurrencyPicker(),
-              ),
-            ),
-            const SizedBox(height: 15),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
-                ),
-              ),
-              child: ListTile(
-                title: Text(
-                  localizations.language,
-                  style: const TextStyle(color: Colors.white),
-                ),
-                subtitle: Text(
-                  '${localizations.selected}: ${LanguageUtils.languages.firstWhere(
-                    (lang) => lang['code'] == _selectedLanguage,
-                    orElse: () => {'code': 'en', 'name': 'English'},
-                  )['name']}',
-                  style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                ),
-                trailing: Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white.withOpacity(0.5),
-                  size: 16,
-                ),
-                onTap: () => _showLanguagePicker(),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(Icons.currency_exchange,
+                          color: Colors.orange.shade300),
+                    ),
+                    title: Text(
+                      localizations.currency,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      '${localizations.selected}: $_selectedCurrency',
+                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.white.withOpacity(0.5),
+                      size: 16,
+                    ),
+                    onTap: () => _showCurrencyPicker(),
+                  ),
+                  Divider(color: Colors.white.withOpacity(0.1)),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child:
+                          Icon(Icons.language, color: Colors.purple.shade300),
+                    ),
+                    title: Text(
+                      localizations.language,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      '${localizations.selected}: ${LanguageUtils.languages.firstWhere(
+                        (lang) => lang['code'] == _selectedLanguage,
+                        orElse: () => {'code': 'en', 'name': 'English'},
+                      )['name']}',
+                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.white.withOpacity(0.5),
+                      size: 16,
+                    ),
+                    onTap: () => _showLanguagePicker(),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),
@@ -274,14 +305,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Icon(Icons.backup, color: Colors.blue.shade300),
                     ),
                     title: Text(
-                      'Backup Data',
+                      localizations.backupData,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     subtitle: Text(
-                      'Export all data to a file',
+                      localizations.backupData,
                       style: TextStyle(color: Colors.white.withOpacity(0.5)),
                     ),
                     onTap: () => _backupData(),
@@ -297,14 +328,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Icon(Icons.restore, color: Colors.green.shade300),
                     ),
                     title: Text(
-                      'Restore Data',
+                      localizations.restoreData,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     subtitle: Text(
-                      'Import data from backup file',
+                      localizations.importData,
                       style: TextStyle(color: Colors.white.withOpacity(0.5)),
                     ),
                     onTap: () => _restoreData(),
@@ -484,8 +515,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
+              child: Text(
+                localizations.cancel,
                 style: TextStyle(color: Colors.white),
               ),
             ),
@@ -521,12 +552,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Erase All Data'),
+              child: Text(localizations.eraseAllData),
             ),
           ],
         );
       },
     );
+  }
+
+  encrypt.Key _getEncryptionKey() {
+    // Generate a consistent key based on device ID or any other unique identifier
+    // For this example, we'll use a fixed key (you should use a more secure method in production)
+    return encrypt.Key.fromUtf8('your32characterkey12345678901234');
   }
 
   Future<void> _backupData() async {
@@ -536,30 +573,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Hive.box<Transaction>(StorageService.transactionsBox);
       final accounts = Hive.box<Account>(StorageService.accountsBox);
       final backupData = {
-        'transactions': transactions.values.map((t) => t.toJson()).toList(),
+        'transactions': transactions.values
+            .map((t) => {
+                  'id': t.id,
+                  'amount': t.amount,
+                  'description': t.note,
+                  'date': t.date.toIso8601String(),
+                  'accountId': t.accountName,
+                  'type': t.isExpense ? 'expense' : 'income',
+                  'category': t.category,
+                  'accountIconIndex': t.accountIconIndex,
+                  'accountColorValue': t.accountColorValue,
+                  'categoryIconIndex': t.categoryIconIndex,
+                  'categoryColorValue': t.categoryColorValue,
+                })
+            .toList(),
         'accounts': accounts.values.map((a) => a.toJson()).toList(),
       };
+      print(backupData);
 
       // Convert to JSON string
       final jsonString = jsonEncode(backupData);
 
+      // Encrypt the data
+      final key = _getEncryptionKey();
+      final iv = encrypt.IV.fromLength(16);
+      final encrypter = encrypt.Encrypter(encrypt.AES(key));
+      final encrypted = encrypter.encrypt(jsonString, iv: iv);
+
+      // Create final backup data with IV
+      final finalBackupData = {
+        'iv': iv.base64,
+        'data': encrypted.base64,
+      };
+
       // Let user pick directory for backup
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
 
-      if (selectedDirectory == null) {
-        // User canceled directory selection
-        return;
-      }
+      if (selectedDirectory == null) return;
 
       // Create backup file in selected directory
       final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
-      final file = File('$selectedDirectory/budgia_backup_$timestamp.json');
-      await file.writeAsString(jsonString);
+      final file = File('$selectedDirectory/budgia_backup_$timestamp.bak');
+      await file.writeAsString(jsonEncode(finalBackupData));
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Backup saved to: ${file.path}'),
+            content: Text('Encrypted backup saved to: ${file.path}'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 5),
             action: SnackBarAction(
@@ -588,87 +649,98 @@ class _SettingsScreenState extends State<SettingsScreen> {
       // Pick file
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['json'],
+        allowedExtensions: ['bak'],
       );
 
       if (result == null) return;
 
       final file = File(result.files.single.path!);
-      final jsonString = await file.readAsString();
-      final Map<String, dynamic> backupData = jsonDecode(jsonString);
+      final encryptedData = jsonDecode(await file.readAsString());
 
-      // Clear existing data
-      final transactionsBox =
-          await Hive.openBox<Transaction>(StorageService.transactionsBox);
-      final accountsBox =
-          await Hive.openBox<Account>(StorageService.accountsBox);
+      // Decrypt the data
+      final key = _getEncryptionKey();
+      final iv = encrypt.IV.fromBase64(encryptedData['iv']);
+      final encrypter = encrypt.Encrypter(encrypt.AES(key));
 
-      await transactionsBox.clear();
-      await accountsBox.clear();
+      try {
+        final decrypted = encrypter.decrypt64(encryptedData['data'], iv: iv);
+        final backupData = jsonDecode(decrypted);
 
-      // Restore transactions
-      if (backupData['transactions'] != null) {
-        for (final transactionJson in backupData['transactions']) {
-          try {
-            final transaction = Transaction(
-              id: transactionJson['id'] ?? DateTime.now().toString(),
-              amount: (transactionJson['amount'] ?? 0).toDouble(),
-              isExpense: transactionJson['type'] == 'expense',
-              category: transactionJson['category'] ?? 'Other',
-              note: transactionJson['description'] ?? '',
-              date: DateTime.parse(transactionJson['date']),
-              accountName: transactionJson['accountId'] ?? 'Default',
-              accountIconIndex: transactionJson['accountIconIndex'] ??
-                  Icons.account_balance.codePoint,
-              accountColorValue:
-                  transactionJson['accountColorValue'] ?? Colors.blue.value,
-              categoryIconIndex: transactionJson['categoryIconIndex'] ??
-                  Icons.category.codePoint,
-              categoryColorValue:
-                  transactionJson['categoryColorValue'] ?? Colors.blue.value,
-            );
-            await transactionsBox.add(transaction);
-          } catch (e) {
-            print('Error restoring transaction: $e');
-            continue;
+        // Clear existing data
+        final transactionsBox =
+            await Hive.openBox<Transaction>(StorageService.transactionsBox);
+        final accountsBox =
+            await Hive.openBox<Account>(StorageService.accountsBox);
+
+        await transactionsBox.clear();
+        await accountsBox.clear();
+
+        // Restore transactions
+        if (backupData['transactions'] != null) {
+          for (final transactionJson in backupData['transactions']) {
+            try {
+              final transaction = Transaction(
+                id: transactionJson['id'] ?? DateTime.now().toString(),
+                amount: (transactionJson['amount'] ?? 0).toDouble(),
+                isExpense: transactionJson['type'] == 'expense',
+                category: transactionJson['category'] ?? 'Other',
+                note: transactionJson['description'] ?? '',
+                date: DateTime.parse(transactionJson['date']),
+                accountName: transactionJson['accountId'] ?? 'Default',
+                accountIconIndex: transactionJson['accountIconIndex'] ??
+                    Icons.account_balance.codePoint,
+                accountColorValue:
+                    transactionJson['accountColorValue'] ?? Colors.blue.value,
+                categoryIconIndex: transactionJson['categoryIconIndex'] ??
+                    Icons.category.codePoint,
+                categoryColorValue:
+                    transactionJson['categoryColorValue'] ?? Colors.blue.value,
+              );
+              await transactionsBox.add(transaction);
+            } catch (e) {
+              print('Error restoring transaction: $e');
+              continue;
+            }
           }
         }
-      }
 
-      // Restore accounts
-      if (backupData['accounts'] != null) {
-        for (final accountJson in backupData['accounts']) {
-          try {
-            final account = Account(
-              id: accountJson['id'] ?? DateTime.now().toString(),
-              name: accountJson['name'] ?? 'Default Account',
-              balance: (accountJson['balance'] ?? 0).toDouble(),
-              iconIndex:
-                  accountJson['iconIndex'] ?? Icons.account_balance.codePoint,
-              colorValue: accountJson['colorValue'] ?? Colors.blue.value,
-            );
-            await accountsBox.add(account);
-          } catch (e) {
-            print('Error restoring account: $e');
-            continue;
+        // Restore accounts
+        if (backupData['accounts'] != null) {
+          for (final accountJson in backupData['accounts']) {
+            try {
+              final account = Account(
+                id: accountJson['id'] ?? DateTime.now().toString(),
+                name: accountJson['name'] ?? 'Default Account',
+                balance: (accountJson['balance'] ?? 0).toDouble(),
+                iconIndex:
+                    accountJson['iconIndex'] ?? Icons.account_balance.codePoint,
+                colorValue: accountJson['colorValue'] ?? Colors.blue.value,
+              );
+              await accountsBox.add(account);
+            } catch (e) {
+              print('Error restoring account: $e');
+              continue;
+            }
           }
         }
-      }
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Data restored successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Data restored successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
 
-        // Refresh the app state
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const AuthPage()),
-          (route) => false,
-        );
+          // Refresh the app state
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const AuthPage()),
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        throw Exception('Invalid backup file or corrupted data');
       }
     } catch (e) {
       print('Restore error: $e');

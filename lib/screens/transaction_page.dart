@@ -48,55 +48,67 @@ class _TransactionPageState extends State<TransactionPage> {
   @override
   void initState() {
     super.initState();
-    _loadCategories();
     _loadCurrencySymbol();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadCategories();
   }
 
   Future<void> _loadCategories() async {
     final categoryBox = await Hive.openBox<CategoryModel>('categories');
+    final localizations = AppLocalizations.of(context);
+
+    if (localizations == null) {
+      print('Localizations not ready yet');
+      Future.microtask(() => _loadCategories());
+      return;
+    }
 
     if (categoryBox.isEmpty) {
       // Add default expense categories
       await Future.wait([
         categoryBox.put(
-            'expense_Shopping',
+            'expense_shopping',
             CategoryModel(
-              name: 'Shopping',
+              name: 'shopping',
               iconCode: Icons.shopping_cart.codePoint,
               isExpense: true,
             )),
         categoryBox.put(
-            'expense_Food & Drinks',
+            'expense_food_drinks',
             CategoryModel(
-              name: 'Food & Drinks',
+              name: 'food_drinks',
               iconCode: Icons.restaurant.codePoint,
               isExpense: true,
             )),
         categoryBox.put(
-            'expense_Transportation',
+            'expense_transportation',
             CategoryModel(
-              name: 'Transportation',
+              name: 'transportation',
               iconCode: Icons.directions_car.codePoint,
               isExpense: true,
             )),
         categoryBox.put(
-            'expense_Entertainment',
+            'expense_entertainment',
             CategoryModel(
-              name: 'Entertainment',
+              name: 'entertainment',
               iconCode: Icons.movie.codePoint,
               isExpense: true,
             )),
         categoryBox.put(
-            'expense_Bills & Utilities',
+            'expense_bills_utilities',
             CategoryModel(
-              name: 'Bills & Utilities',
+              name: 'bills_utilities',
               iconCode: Icons.receipt.codePoint,
               isExpense: true,
             )),
         categoryBox.put(
-            'expense_Others',
+            'expense_others',
             CategoryModel(
-              name: 'Others',
+              name: 'others',
               iconCode: Icons.more_horiz.codePoint,
               isExpense: true,
             )),
@@ -105,49 +117,81 @@ class _TransactionPageState extends State<TransactionPage> {
       // Add default income categories
       await Future.wait([
         categoryBox.put(
-            'income_Salary',
+            'income_salary',
             CategoryModel(
-              name: 'Salary',
+              name: 'salary',
               iconCode: Icons.payments.codePoint,
               isExpense: false,
             )),
         categoryBox.put(
-            'income_Investment',
+            'income_investment',
             CategoryModel(
-              name: 'Investment',
+              name: 'investment',
               iconCode: Icons.trending_up.codePoint,
               isExpense: false,
             )),
         categoryBox.put(
-            'income_Gift',
+            'income_gift',
             CategoryModel(
-              name: 'Gift',
+              name: 'gift',
               iconCode: Icons.card_giftcard.codePoint,
               isExpense: false,
             )),
       ]);
     }
 
-    setState(() {
-      // Separate categories based on transaction type, handling null values
-      expenseCategories = categoryBox.values
-          .where((cat) => cat.isExpense ?? true) // Default to expense if null
-          .map((cat) => cat.name)
-          .toList();
-      incomeCategories = categoryBox.values
-          .where(
-              (cat) => cat.isExpense == false) // Only explicitly false values
-          .map((cat) => cat.name)
-          .toList();
+    // Get translated category names
+    Map<String, String> translatedCategories = {
+      'shopping': localizations.Shopping,
+      'food_drinks': localizations.foodAndDrinks,
+      'transportation': localizations.Transportation,
+      'entertainment': localizations.Entertainment,
+      'bills_utilities': localizations.billsAndUtilities,
+      'others': localizations.Others,
+      'salary': localizations.salary,
+      'investment': localizations.investment,
+      'gift': localizations.gift,
+    };
 
-      categoryIcons.clear();
-      for (var category in categoryBox.values) {
-        categoryIcons[category.name] = IconData(
-          category.iconCode,
-          fontFamily: 'MaterialIcons',
-        );
-      }
+    print('Current translations:');
+    translatedCategories.forEach((key, value) {
+      print('$key -> $value');
     });
+
+    if (mounted) {
+      setState(() {
+        // Update expense categories
+        expenseCategories =
+            categoryBox.values.where((cat) => cat.isExpense ?? true).map((cat) {
+          final translated = translatedCategories[cat.name];
+          print('Translating expense category ${cat.name} to $translated');
+          return translated ?? cat.name;
+        }).toList();
+
+        // Update income categories
+        incomeCategories = categoryBox.values
+            .where((cat) => cat.isExpense == false)
+            .map((cat) {
+          final translated = translatedCategories[cat.name];
+          print('Translating income category ${cat.name} to $translated');
+          return translated ?? cat.name;
+        }).toList();
+
+        // Update category icons
+        categoryIcons.clear();
+        for (var category in categoryBox.values) {
+          final translatedName =
+              translatedCategories[category.name] ?? category.name;
+          categoryIcons[translatedName] = IconData(
+            category.iconCode,
+            fontFamily: 'MaterialIcons',
+          );
+        }
+
+        print('Final expense categories: $expenseCategories');
+        print('Final income categories: $incomeCategories');
+      });
+    }
   }
 
   Future<void> _loadCurrencySymbol() async {
@@ -239,13 +283,16 @@ class _TransactionPageState extends State<TransactionPage> {
 
     if (newCategoryName != null && newCategoryName.isNotEmpty) {
       final categoryBox = await Hive.openBox<CategoryModel>('categories');
+      // Convert the category name to a key format (lowercase, no spaces)
+      final categoryNameKey =
+          newCategoryName.toLowerCase().replaceAll(' ', '_');
       final categoryKey = widget.isExpense
-          ? 'expense_$newCategoryName'
-          : 'income_$newCategoryName';
+          ? 'expense_$categoryNameKey'
+          : 'income_$categoryNameKey';
 
-      // Create the new category
+      // Create the new category with the key name
       final newCategory = CategoryModel(
-        name: newCategoryName,
+        name: categoryNameKey, // Store the key instead of the translated name
         iconCode: (categoryIcons[newCategoryName] ?? Icons.category).codePoint,
         isExpense: widget.isExpense,
       );
@@ -253,7 +300,7 @@ class _TransactionPageState extends State<TransactionPage> {
       // Store the new category
       await categoryBox.put(categoryKey, newCategory);
 
-      // Update the UI
+      // Update the UI with the translated name
       setState(() {
         if (widget.isExpense) {
           expenseCategories.add(newCategoryName);
