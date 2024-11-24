@@ -8,6 +8,7 @@ import 'package:hive/hive.dart';
 import 'package:budgia/models/category_model.dart';
 import 'package:budgia/utils/currency_utils.dart';
 import 'package:budgia/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashScreen extends StatefulWidget {
   const DashScreen({super.key});
@@ -22,6 +23,7 @@ class _DashScreenState extends State<DashScreen> {
   List<Transaction> _allTransactions = [];
   Map<String, IconData> _categoryIcons = {};
   String _currencySymbol = '\$';
+  String _userName = '';
 
   @override
   void initState() {
@@ -31,6 +33,7 @@ class _DashScreenState extends State<DashScreen> {
       _loadTransactions();
       _loadCategoryIcons();
       _loadCurrencySymbol();
+      _loadUserName();
     });
   }
 
@@ -68,6 +71,13 @@ class _DashScreenState extends State<DashScreen> {
     final symbol = await CurrencyUtils.getSelectedCurrencySymbol();
     setState(() {
       _currencySymbol = symbol;
+    });
+  }
+
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('user_name') ?? 'User';
     });
   }
 
@@ -118,9 +128,9 @@ class _DashScreenState extends State<DashScreen> {
                             fontSize: 14,
                           ),
                         ),
-                        const Text(
-                          'Sarah Parker',
-                          style: TextStyle(
+                        Text(
+                          _userName,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -209,6 +219,7 @@ class _DashScreenState extends State<DashScreen> {
                                     '+$_currencySymbol${_calculateIncome().toStringAsFixed(2)}',
                                 iconColor: Colors.green,
                               ),
+                              const SizedBox(width: 10),
                               _buildBalanceItem(
                                 icon: Icons.arrow_downward,
                                 label: localizations.expenses,

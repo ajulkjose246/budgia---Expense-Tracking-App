@@ -10,8 +10,12 @@ class CategoryModel extends HiveObject {
   @HiveField(1)
   final int iconCode;
 
+  @HiveField(2)
+  final bool? isExpense;
+
   CategoryModel({
     required this.name,
     required this.iconCode,
+    this.isExpense = true,
   });
 }

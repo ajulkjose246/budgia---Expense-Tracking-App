@@ -19,16 +19,17 @@ class StorageService {
     required Color accountColor,
     required IconData categoryIcon,
     required Color categoryColor,
+    required DateTime date,
   }) async {
-    final box = Hive.box<Transaction>(transactionsBox);
+    final box = await Hive.openBox<Transaction>('transactions');
 
     final transaction = Transaction(
-      id: const Uuid().v4(),
+      id: DateTime.now().toString(),
       amount: amount,
       isExpense: isExpense,
       category: category,
       note: note,
-      date: DateTime.now(),
+      date: date,
       accountName: accountName,
       accountIconIndex: accountIcon.codePoint,
       accountColorValue: accountColor.value,

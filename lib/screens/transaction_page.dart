@@ -27,7 +27,8 @@ class TransactionPage extends StatefulWidget {
 class _TransactionPageState extends State<TransactionPage> {
   DateTime selectedDate = DateTime.now();
   String? selectedCategory;
-  List<String> categories = [];
+  List<String> expenseCategories = [];
+  List<String> incomeCategories = [];
 
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
@@ -55,49 +56,90 @@ class _TransactionPageState extends State<TransactionPage> {
     final categoryBox = await Hive.openBox<CategoryModel>('categories');
 
     if (categoryBox.isEmpty) {
-      // Add default categories to Hive
+      // Add default expense categories
       await Future.wait([
         categoryBox.put(
-            'Shopping',
+            'expense_Shopping',
             CategoryModel(
               name: 'Shopping',
               iconCode: Icons.shopping_cart.codePoint,
+              isExpense: true,
             )),
         categoryBox.put(
-            'Food & Drinks',
+            'expense_Food & Drinks',
             CategoryModel(
               name: 'Food & Drinks',
               iconCode: Icons.restaurant.codePoint,
+              isExpense: true,
             )),
         categoryBox.put(
-            'Transportation',
+            'expense_Transportation',
             CategoryModel(
               name: 'Transportation',
               iconCode: Icons.directions_car.codePoint,
+              isExpense: true,
             )),
         categoryBox.put(
-            'Entertainment',
+            'expense_Entertainment',
             CategoryModel(
               name: 'Entertainment',
               iconCode: Icons.movie.codePoint,
+              isExpense: true,
             )),
         categoryBox.put(
-            'Bills & Utilities',
+            'expense_Bills & Utilities',
             CategoryModel(
               name: 'Bills & Utilities',
               iconCode: Icons.receipt.codePoint,
+              isExpense: true,
             )),
         categoryBox.put(
-            'Others',
+            'expense_Others',
             CategoryModel(
               name: 'Others',
               iconCode: Icons.more_horiz.codePoint,
+              isExpense: true,
+            )),
+      ]);
+
+      // Add default income categories
+      await Future.wait([
+        categoryBox.put(
+            'income_Salary',
+            CategoryModel(
+              name: 'Salary',
+              iconCode: Icons.payments.codePoint,
+              isExpense: false,
+            )),
+        categoryBox.put(
+            'income_Investment',
+            CategoryModel(
+              name: 'Investment',
+              iconCode: Icons.trending_up.codePoint,
+              isExpense: false,
+            )),
+        categoryBox.put(
+            'income_Gift',
+            CategoryModel(
+              name: 'Gift',
+              iconCode: Icons.card_giftcard.codePoint,
+              isExpense: false,
             )),
       ]);
     }
 
     setState(() {
-      categories = categoryBox.values.map((cat) => cat.name).toList();
+      // Separate categories based on transaction type, handling null values
+      expenseCategories = categoryBox.values
+          .where((cat) => cat.isExpense ?? true) // Default to expense if null
+          .map((cat) => cat.name)
+          .toList();
+      incomeCategories = categoryBox.values
+          .where(
+              (cat) => cat.isExpense == false) // Only explicitly false values
+          .map((cat) => cat.name)
+          .toList();
+
       categoryIcons.clear();
       for (var category in categoryBox.values) {
         categoryIcons[category.name] = IconData(
@@ -116,7 +158,7 @@ class _TransactionPageState extends State<TransactionPage> {
   }
 
   Future<void> _addNewCategory() async {
-    String? newCategory = await showDialog<String>(
+    String? newCategoryName = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
         String categoryInput = '';
@@ -128,7 +170,7 @@ class _TransactionPageState extends State<TransactionPage> {
             return AlertDialog(
               backgroundColor: const Color(0xFF0A0E21),
               title: Text(localizations.addNewCategory,
-                  style: TextStyle(color: Colors.white)),
+                  style: const TextStyle(color: Colors.white)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -183,8 +225,8 @@ class _TransactionPageState extends State<TransactionPage> {
                   child: const Text('Add'),
                   onPressed: () {
                     if (categoryInput.isNotEmpty) {
-                      categoryIcons[categoryInput] = selectedIcon;
                       Navigator.of(context).pop(categoryInput);
+                      categoryIcons[categoryInput] = selectedIcon;
                     }
                   },
                 ),
@@ -195,20 +237,30 @@ class _TransactionPageState extends State<TransactionPage> {
       },
     );
 
-    if (newCategory != null && newCategory.isNotEmpty) {
+    if (newCategoryName != null && newCategoryName.isNotEmpty) {
       final categoryBox = await Hive.openBox<CategoryModel>('categories');
+      final categoryKey = widget.isExpense
+          ? 'expense_$newCategoryName'
+          : 'income_$newCategoryName';
 
-      // Store the new category in Hive
-      await categoryBox.put(
-          newCategory,
-          CategoryModel(
-            name: newCategory,
-            iconCode: categoryIcons[newCategory]!.codePoint,
-          ));
+      // Create the new category
+      final newCategory = CategoryModel(
+        name: newCategoryName,
+        iconCode: (categoryIcons[newCategoryName] ?? Icons.category).codePoint,
+        isExpense: widget.isExpense,
+      );
 
+      // Store the new category
+      await categoryBox.put(categoryKey, newCategory);
+
+      // Update the UI
       setState(() {
-        categories.add(newCategory);
-        selectedCategory = newCategory;
+        if (widget.isExpense) {
+          expenseCategories.add(newCategoryName);
+        } else {
+          incomeCategories.add(newCategoryName);
+        }
+        selectedCategory = newCategoryName;
       });
     }
   }
@@ -312,7 +364,10 @@ class _TransactionPageState extends State<TransactionPage> {
                           style:
                               TextStyle(color: Colors.white.withOpacity(0.5)),
                         ),
-                        items: categories.map((String value) {
+                        items: (widget.isExpense
+                                ? expenseCategories
+                                : incomeCategories)
+                            .map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
                             child: Row(
@@ -468,30 +523,22 @@ class _TransactionPageState extends State<TransactionPage> {
                 }
               }
 
-              // Get the category icon and color from Hive
+              // Get the category icon and color
               final categoryBox =
                   await Hive.openBox<CategoryModel>('categories');
-              final category = categoryBox.get(selectedCategory!);
-              final categoryIconCode =
-                  category?.iconCode ?? Icons.category.codePoint;
-              final categoryColorValue = widget.accountColor.value;
+              final categoryKey = widget.isExpense
+                  ? 'expense_$selectedCategory'
+                  : 'income_$selectedCategory';
+              final category = categoryBox.get(categoryKey);
 
-              // Create new transaction with the correct icon
-              final transaction = Transaction(
-                id: DateTime.now().toString(),
-                amount: amount,
-                isExpense: widget.isExpense,
-                category: selectedCategory!,
-                note: _noteController.text,
-                date: selectedDate,
-                accountName: widget.accountLabel,
-                accountIconIndex: Icons.account_balance.codePoint,
-                accountColorValue: widget.accountColor.value,
-                categoryIconIndex: categoryIconCode,
-                categoryColorValue: categoryColorValue,
-              );
+              if (category == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Category not found')),
+                );
+                return;
+              }
 
-              // Store transaction
+              // Store transaction with the correct category icon and color
               await _storageService.addTransaction(
                 amount: amount,
                 isExpense: widget.isExpense,
@@ -501,8 +548,9 @@ class _TransactionPageState extends State<TransactionPage> {
                 accountIcon: Icons.account_balance,
                 accountColor: widget.accountColor,
                 categoryIcon:
-                    IconData(categoryIconCode, fontFamily: 'MaterialIcons'),
+                    IconData(category.iconCode, fontFamily: 'MaterialIcons'),
                 categoryColor: widget.accountColor,
+                date: selectedDate,
               );
               await context.read<AccountsProvider>().updateAccountBalance(
                     widget.accountLabel,

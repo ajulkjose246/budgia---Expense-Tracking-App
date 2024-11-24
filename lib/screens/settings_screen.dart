@@ -1,3 +1,4 @@
+import 'package:budgia/auth/auth_page.dart';
 import 'package:budgia/main.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,6 +9,8 @@ import 'package:budgia/services/storage_service.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:budgia/l10n/app_localizations.dart';
+import 'package:budgia/utils/currency_utils.dart';
+import 'package:budgia/utils/language_utils.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -24,38 +27,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _canCheckBiometrics = false;
   List<BiometricType> _availableBiometrics = [];
 
-  final List<Map<String, dynamic>> _currencies = [
-    {'code': 'USD', 'symbol': '\$', 'name': 'US Dollar'},
-    {'code': 'EUR', 'symbol': '€', 'name': 'Euro'},
-    {'code': 'GBP', 'symbol': '£', 'name': 'British Pound'},
-    {'code': 'INR', 'symbol': '₹', 'name': 'Indian Rupee'},
-    {'code': 'JPY', 'symbol': '¥', 'name': 'Japanese Yen'},
-    {'code': 'CNY', 'symbol': '¥', 'name': 'Chinese Yuan'},
-    {'code': 'AUD', 'symbol': 'A\$', 'name': 'Australian Dollar'},
-    {'code': 'CAD', 'symbol': 'C\$', 'name': 'Canadian Dollar'},
-    {'code': 'CHF', 'symbol': 'Fr', 'name': 'Swiss Franc'},
-    {'code': 'HKD', 'symbol': 'HK\$', 'name': 'Hong Kong Dollar'},
-    {'code': 'SGD', 'symbol': 'S\$', 'name': 'Singapore Dollar'},
-    {'code': 'AED', 'symbol': 'د.إ', 'name': 'UAE Dirham'},
-    {'code': 'NZD', 'symbol': 'NZ\$', 'name': 'New Zealand Dollar'},
-    {'code': 'ZAR', 'symbol': 'R', 'name': 'South African Rand'},
-    {'code': 'RUB', 'symbol': '₽', 'name': 'Russian Ruble'},
-    {'code': 'BRL', 'symbol': 'R\$', 'name': 'Brazilian Real'},
-    {'code': 'KRW', 'symbol': '₩', 'name': 'South Korean Won'},
-    {'code': 'MXN', 'symbol': 'Mex\$', 'name': 'Mexican Peso'},
-    {'code': 'SAR', 'symbol': '﷼', 'name': 'Saudi Riyal'},
-    {'code': 'THB', 'symbol': '฿', 'name': 'Thai Baht'},
-  ];
-
   static const String currencyPrefsKey = 'selected_currency';
   static const String languagePrefsKey = 'selected_language';
-
-  final List<Map<String, String>> _languages = [
-    {'code': 'en', 'name': 'English'},
-    {'code': 'es', 'name': 'Español'},
-    {'code': 'fr', 'name': 'Français'},
-    {'code': 'ml', 'name': 'മലയാളം'},
-  ];
 
   @override
   void initState() {
@@ -261,7 +234,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: const TextStyle(color: Colors.white),
                 ),
                 subtitle: Text(
-                  '${localizations.selected}: ${_languages.firstWhere(
+                  '${localizations.selected}: ${LanguageUtils.languages.firstWhere(
                     (lang) => lang['code'] == _selectedLanguage,
                     orElse: () => {'code': 'en', 'name': 'English'},
                   )['name']}',
@@ -349,9 +322,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: double.maxFinite,
             child: ListView.builder(
               shrinkWrap: true,
-              itemCount: _currencies.length,
+              itemCount: CurrencyUtils.currencies.length,
               itemBuilder: (context, index) {
-                final currency = _currencies[index];
+                final currency = CurrencyUtils.currencies[index];
                 return ListTile(
                   title: Text(
                     '${currency['name']} (${currency['symbol']})',
@@ -397,9 +370,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: double.maxFinite,
             child: ListView.builder(
               shrinkWrap: true,
-              itemCount: _languages.length,
+              itemCount: LanguageUtils.languages.length,
               itemBuilder: (context, index) {
-                final language = _languages[index];
+                final language = LanguageUtils.languages[index];
                 return ListTile(
                   title: Text(
                     language['name']!,
@@ -482,7 +455,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     backgroundColor: Colors.red,
                   ),
                 );
-                Navigator.of(context).pushReplacementNamed('/auth');
+                Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AuthPage()),
+                    (route) => false);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
