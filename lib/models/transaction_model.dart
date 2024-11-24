@@ -50,4 +50,32 @@ class Transaction extends HiveObject {
     required this.categoryIconIndex,
     required this.categoryColorValue,
   });
+
+  factory Transaction.fromJson(Map<String, dynamic> json) {
+    return Transaction(
+      id: json['id'],
+      amount: json['amount'],
+      isExpense: json['type'] == 'expense',
+      category: json['category'],
+      note: json['note'],
+      date: DateTime.parse(json['date']),
+      accountName: json['accountId'],
+      accountIconIndex: json['accountIconIndex'],
+      accountColorValue: json['accountColorValue'],
+      categoryIconIndex: json['categoryIconIndex'],
+      categoryColorValue: json['categoryColorValue'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'amount': amount,
+      'description': note,
+      'date': date.toIso8601String(),
+      'accountId': accountName,
+      'type': isExpense ? 'expense' : 'income',
+      // Add any other properties your Transaction class has
+    };
+  }
 }

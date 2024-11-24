@@ -26,4 +26,23 @@ class Account extends HiveObject {
     required this.iconIndex,
     required this.colorValue,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'balance': balance,
+      'iconIndex': iconIndex,
+      'colorValue': colorValue,
+    };
+  }
+
+  factory Account.fromJson(Map<String, dynamic> json) {
+    return Account(
+      id: json['id'],
+      name: json['name'],
+      balance: json['balance'],
+      iconIndex: json['iconIndex'],
+      colorValue: json['colorValue'],
+    );
+  }
 }

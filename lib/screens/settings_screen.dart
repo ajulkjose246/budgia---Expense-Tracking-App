@@ -11,6 +11,10 @@ import 'package:flutter/services.dart';
 import 'package:budgia/l10n/app_localizations.dart';
 import 'package:budgia/utils/currency_utils.dart';
 import 'package:budgia/utils/language_utils.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -258,27 +262,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: Colors.white.withOpacity(0.1),
                 ),
               ),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(Icons.backup, color: Colors.blue.shade300),
+                    ),
+                    title: Text(
+                      'Backup Data',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Export all data to a file',
+                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    ),
+                    onTap: () => _backupData(),
                   ),
-                  child: Icon(Icons.delete_forever, color: Colors.red.shade300),
-                ),
-                title: Text(
-                  localizations.eraseAllData,
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
+                  Divider(color: Colors.white.withOpacity(0.1)),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(Icons.restore, color: Colors.green.shade300),
+                    ),
+                    title: Text(
+                      'Restore Data',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Import data from backup file',
+                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    ),
+                    onTap: () => _restoreData(),
                   ),
-                ),
-                subtitle: Text(
-                  localizations.cannotBeUndone,
-                  style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                ),
-                onTap: () => _showEraseConfirmationDialog(),
+                  Divider(color: Colors.white.withOpacity(0.1)),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(Icons.delete_forever,
+                          color: Colors.red.shade300),
+                    ),
+                    title: Text(
+                      localizations.eraseAllData,
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      localizations.cannotBeUndone,
+                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    ),
+                    onTap: () => _showEraseConfirmationDialog(),
+                  ),
+                ],
               ),
             ),
           ],
@@ -472,5 +527,159 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _backupData() async {
+    try {
+      // Get all data from Hive boxes
+      final transactions =
+          Hive.box<Transaction>(StorageService.transactionsBox);
+      final accounts = Hive.box<Account>(StorageService.accountsBox);
+      final backupData = {
+        'transactions': transactions.values.map((t) => t.toJson()).toList(),
+        'accounts': accounts.values.map((a) => a.toJson()).toList(),
+      };
+
+      // Convert to JSON string
+      final jsonString = jsonEncode(backupData);
+
+      // Let user pick directory for backup
+      String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+
+      if (selectedDirectory == null) {
+        // User canceled directory selection
+        return;
+      }
+
+      // Create backup file in selected directory
+      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
+      final file = File('$selectedDirectory/budgia_backup_$timestamp.json');
+      await file.writeAsString(jsonString);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backup saved to: ${file.path}'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating backup: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _restoreData() async {
+    try {
+      // Pick file
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (result == null) return;
+
+      final file = File(result.files.single.path!);
+      final jsonString = await file.readAsString();
+      final Map<String, dynamic> backupData = jsonDecode(jsonString);
+
+      // Clear existing data
+      final transactionsBox =
+          await Hive.openBox<Transaction>(StorageService.transactionsBox);
+      final accountsBox =
+          await Hive.openBox<Account>(StorageService.accountsBox);
+
+      await transactionsBox.clear();
+      await accountsBox.clear();
+
+      // Restore transactions
+      if (backupData['transactions'] != null) {
+        for (final transactionJson in backupData['transactions']) {
+          try {
+            final transaction = Transaction(
+              id: transactionJson['id'] ?? DateTime.now().toString(),
+              amount: (transactionJson['amount'] ?? 0).toDouble(),
+              isExpense: transactionJson['type'] == 'expense',
+              category: transactionJson['category'] ?? 'Other',
+              note: transactionJson['description'] ?? '',
+              date: DateTime.parse(transactionJson['date']),
+              accountName: transactionJson['accountId'] ?? 'Default',
+              accountIconIndex: transactionJson['accountIconIndex'] ??
+                  Icons.account_balance.codePoint,
+              accountColorValue:
+                  transactionJson['accountColorValue'] ?? Colors.blue.value,
+              categoryIconIndex: transactionJson['categoryIconIndex'] ??
+                  Icons.category.codePoint,
+              categoryColorValue:
+                  transactionJson['categoryColorValue'] ?? Colors.blue.value,
+            );
+            await transactionsBox.add(transaction);
+          } catch (e) {
+            print('Error restoring transaction: $e');
+            continue;
+          }
+        }
+      }
+
+      // Restore accounts
+      if (backupData['accounts'] != null) {
+        for (final accountJson in backupData['accounts']) {
+          try {
+            final account = Account(
+              id: accountJson['id'] ?? DateTime.now().toString(),
+              name: accountJson['name'] ?? 'Default Account',
+              balance: (accountJson['balance'] ?? 0).toDouble(),
+              iconIndex:
+                  accountJson['iconIndex'] ?? Icons.account_balance.codePoint,
+              colorValue: accountJson['colorValue'] ?? Colors.blue.value,
+            );
+            await accountsBox.add(account);
+          } catch (e) {
+            print('Error restoring account: $e');
+            continue;
+          }
+        }
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data restored successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Refresh the app state
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const AuthPage()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      print('Restore error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error restoring backup: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
