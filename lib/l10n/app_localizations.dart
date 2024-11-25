@@ -142,6 +142,15 @@ class AppLocalizations {
   String get gift => _localizedValues[locale.languageCode]!['gift']!;
   String get sortBy => _localizedValues[locale.languageCode]!['sortBy']!;
   String get amount => _localizedValues[locale.languageCode]!['amount']!;
+  String get today => _localizedValues[locale.languageCode]!['today']!;
+  String get thisWeek => _localizedValues[locale.languageCode]!['thisWeek']!;
+  String get profile => _localizedValues[locale.languageCode]!['profile']!;
+  String get name => _localizedValues[locale.languageCode]!['name']!;
+  String get editName => _localizedValues[locale.languageCode]!['editName']!;
+  String get enterName => _localizedValues[locale.languageCode]!['enterName']!;
+  String get save => _localizedValues[locale.languageCode]!['save']!;
+  String get appInfo => _localizedValues[locale.languageCode]!['appInfo']!;
+  String get version => _localizedValues[locale.languageCode]!['version']!;
 }
 
 class _AppLocalizationsDelegate

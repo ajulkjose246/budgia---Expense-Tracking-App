@@ -59,93 +59,66 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     required IconData accountIcon,
     required Color accountColor,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+    return Dismissible(
+      key: ValueKey(
+          'transaction.id'), // Assuming 'transaction.id' is a placeholder for a unique identifier
+      background: Container(
+        decoration: BoxDecoration(
+          color: Colors.redAccent.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(16),
         ),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(Icons.delete, color: Colors.redAccent),
       ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Icon(icon, color: iconColor),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                amount,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      direction: DismissDirection.endToStart,
+      onDismissed: (direction) {
+        // Add delete functionality
+      },
+      child: Card(
+        elevation: 0,
+        color: Colors.white.withOpacity(0.03),
+        margin: const EdgeInsets.only(bottom: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Container(
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: accountColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: accountColor.withOpacity(0.3),
-                width: 1,
-              ),
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  accountIcon,
-                  size: 16,
-                  color: accountColor,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  account,
-                  style: TextStyle(
-                    color: accountColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+            child: Icon(icon, color: iconColor, size: 24),
+          ),
+          title: Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
             ),
           ),
-        ],
+          subtitle: Text(
+            '$account ${subtitle.isNotEmpty ? ' • $subtitle' : ''}',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
+              fontSize: 13,
+            ),
+          ),
+          trailing: Text(
+            amount,
+            style: TextStyle(
+              color: amount.startsWith('-')
+                  ? Colors.redAccent
+                  : Colors.greenAccent,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -155,113 +128,124 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     final localizations = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E21),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF0A0E21),
-              const Color(0xFF0A0E21).withOpacity(0.8),
-              Colors.indigo.withOpacity(0.3),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Custom App Bar with Filter
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: CustomScrollView(
+        slivers: [
+          // App Bar
+          SliverAppBar(
+            expandedHeight: 140,
+            pinned: true,
+            backgroundColor: const Color(0xFF0A0E21),
+            iconTheme: const IconThemeData(color: Colors.white),
+            title: Text(
+              localizations.transactionHistory,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                padding: const EdgeInsets.fromLTRB(16, 60, 16, 8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon:
-                              const Icon(Icons.arrow_back, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        Text(
-                          localizations.transactionHistory,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildSummaryChip(
+                            label: localizations.today,
+                            amount:
+                                '$currencySymbol${_calculateTodaySpending().toStringAsFixed(2)}',
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          _buildSummaryChip(
+                            label: localizations.thisWeek,
+                            amount:
+                                '$currencySymbol${_calculateWeekSpending().toStringAsFixed(2)}',
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-
-              // Summary Card
-
-              const SizedBox(height: 20),
-
-              // Add sorting options here
-              _buildSortingOptions(),
-
-              // Transactions List
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: transactions.length,
-                  itemBuilder: (context, index) {
-                    final transaction = transactions[index];
-                    return _buildTransactionItem(
-                      icon: IconData(transaction.categoryIconIndex,
-                          fontFamily: 'MaterialIcons'),
-                      title: transaction.category,
-                      subtitle: transaction.note,
-                      amount:
-                          '${transaction.isExpense ? '-' : '+'}$currencySymbol${transaction.amount.toStringAsFixed(2)}',
-                      iconColor: Color(transaction.categoryColorValue),
-                      account: transaction.accountName,
-                      accountIcon: IconData(transaction.accountIconIndex,
-                          fontFamily: 'MaterialIcons'),
-                      accountColor: Color(transaction.accountColorValue),
-                    );
-                  },
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+
+          // Sorting Options
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _SortingHeaderDelegate(
+              child: Container(
+                color: const Color(0xFF0A0E21),
+                child: _buildSortingOptions(),
+              ),
+            ),
+          ),
+
+          // Transaction List
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final transaction = transactions[index];
+                  return _buildTransactionItem(
+                    icon: IconData(transaction.categoryIconIndex,
+                        fontFamily: 'MaterialIcons'),
+                    title: transaction.category,
+                    subtitle: transaction.note,
+                    amount:
+                        '${transaction.isExpense ? '-' : '+'}$currencySymbol${transaction.amount.toStringAsFixed(2)}',
+                    iconColor: Color(transaction.categoryColorValue),
+                    account: transaction.accountName,
+                    accountIcon: IconData(transaction.accountIconIndex,
+                        fontFamily: 'MaterialIcons'),
+                    accountColor: Color(transaction.accountColorValue),
+                  );
+                },
+                childCount: transactions.length,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSummaryItem({
-    required String label,
-    required String amount,
-    required Color color,
-  }) {
+  Widget _buildSummaryChip({required String label, required String amount}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      width: 150,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 13,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             amount,
-            style: TextStyle(
-              color: color,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -320,6 +304,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
+          // Sort By Label
           Text(
             localizations.sortBy,
             style: TextStyle(
@@ -328,52 +313,103 @@ class _TransactionHistoryState extends State<TransactionHistory> {
             ),
           ),
           const SizedBox(width: 12),
-          DropdownButton<String>(
-            value: _sortBy,
-            dropdownColor: const Color(0xFF0A0E21),
-            style: const TextStyle(color: Colors.white),
-            underline: Container(
-              height: 1,
-              color: Colors.white.withOpacity(0.3),
+
+          // Sort Options Container
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
             ),
-            onChanged: (String? newValue) {
-              if (newValue != null) {
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: DropdownButton<String>(
+              value: _sortBy,
+              dropdownColor:
+                  const Color(0xFF1D1E33), // Slightly lighter than background
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              icon: Icon(
+                Icons.arrow_drop_down,
+                color: Colors.white.withOpacity(0.7),
+              ),
+              underline: const SizedBox(), // Remove underline
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    _sortBy = newValue;
+                    _sortTransactions();
+                  });
+                }
+              },
+              items: [
+                DropdownMenuItem(
+                  value: 'date',
+                  child: Text(localizations.date),
+                ),
+                DropdownMenuItem(
+                  value: 'amount',
+                  child: Text(localizations.amount),
+                ),
+                DropdownMenuItem(
+                  value: 'category',
+                  child: Text(localizations.category),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Sort Direction Button
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: IconButton(
+              icon: Icon(
+                _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                color: Colors.white.withOpacity(0.7),
+                size: 20,
+              ),
+              onPressed: () {
                 setState(() {
-                  _sortBy = newValue;
+                  _sortAscending = !_sortAscending;
                   _sortTransactions();
                 });
-              }
-            },
-            items: [
-              DropdownMenuItem(
-                value: 'date',
-                child: Text(localizations.date),
+              },
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(
+                minHeight: 36,
+                minWidth: 36,
               ),
-              DropdownMenuItem(
-                value: 'amount',
-                child: Text(localizations.amount),
-              ),
-              DropdownMenuItem(
-                value: 'category',
-                child: Text(localizations.category),
-              ),
-            ],
-          ),
-          const SizedBox(width: 16),
-          IconButton(
-            icon: Icon(
-              _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
-              color: Colors.white.withOpacity(0.7),
             ),
-            onPressed: () {
-              setState(() {
-                _sortAscending = !_sortAscending;
-                _sortTransactions();
-              });
-            },
           ),
         ],
       ),
     );
   }
+}
+
+// Add this new class at the bottom of the file
+class _SortingHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  _SortingHeaderDelegate({required this.child});
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return child;
+  }
+
+  @override
+  double get maxExtent => 60;
+
+  @override
+  double get minExtent => 60;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
+      false;
 }

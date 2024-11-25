@@ -15,6 +15,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
+import 'package:package_info_plus/package_info_plus.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -30,9 +31,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final LocalAuthentication _localAuth = LocalAuthentication();
   bool _canCheckBiometrics = false;
   List<BiometricType> _availableBiometrics = [];
+  String _userName = '';
+  String _appVersion = '';
 
   static const String currencyPrefsKey = 'selected_currency';
   static const String languagePrefsKey = 'selected_language';
+  static const String userNamePrefsKey = 'user_name';
 
   @override
   void initState() {
@@ -41,6 +45,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadSystemLockState();
     _checkBiometricSupport();
     _loadSavedLanguage();
+    _loadUserName();
+    _loadAppVersion();
   }
 
   Future<void> _loadSavedCurrency() async {
@@ -84,6 +90,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString(userNamePrefsKey) ?? 'User';
+    });
+  }
+
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = packageInfo.version;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
@@ -118,6 +138,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
         body: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            _buildSectionHeader(localizations.profile),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.1),
+                ),
+              ),
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.person, color: Colors.purple.shade300),
+                ),
+                title: Text(
+                  localizations.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  _userName,
+                  style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                ),
+                trailing: Icon(
+                  Icons.edit,
+                  color: Colors.white.withOpacity(0.5),
+                  size: 16,
+                ),
+                onTap: () => _showNameEditDialog(),
+              ),
+            ),
+            const SizedBox(height: 24),
             _buildSectionHeader(localizations.security),
             Container(
               decoration: BoxDecoration(
@@ -367,6 +425,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 24),
+            _buildSectionHeader(localizations.appInfo),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.1),
+                ),
+              ),
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.info_outline, color: Colors.teal.shade300),
+                ),
+                title: Text(
+                  localizations.version,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  _appVersion,
+                  style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -552,7 +642,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: Text(localizations.eraseAllData),
+              child: Text(
+                localizations.eraseAllData,
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -753,5 +846,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     }
+  }
+
+  void _showNameEditDialog() {
+    final localizations = AppLocalizations.of(context);
+    final TextEditingController controller =
+        TextEditingController(text: _userName);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF0A0E21),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: Colors.purple.withOpacity(0.2),
+            ),
+          ),
+          title: Text(
+            localizations.editName,
+            style: const TextStyle(color: Colors.white),
+          ),
+          content: TextField(
+            controller: controller,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: localizations.enterName,
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.purple.withOpacity(0.2)),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.purple),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                localizations.cancel,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (controller.text.trim().isNotEmpty) {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setString(
+                      userNamePrefsKey, controller.text.trim());
+                  setState(() => _userName = controller.text.trim());
+                  if (context.mounted) Navigator.pop(context);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                localizations.save,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

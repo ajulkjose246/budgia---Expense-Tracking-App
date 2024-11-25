@@ -262,11 +262,17 @@ class _TransactionPageState extends State<TransactionPage> {
               ),
               actions: [
                 TextButton(
-                  child: Text(localizations.cancel),
+                  child: Text(
+                    localizations.cancel,
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 TextButton(
-                  child: const Text('Add'),
+                  child: Text(
+                    localizations.add,
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onPressed: () {
                     if (categoryInput.isNotEmpty) {
                       Navigator.of(context).pop(categoryInput);
@@ -623,7 +629,10 @@ class _TransactionPageState extends State<TransactionPage> {
               widget.isExpense
                   ? localizations.newExpense
                   : localizations.newIncome,
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.white,
+              ),
             ),
           ),
         ),

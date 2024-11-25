@@ -71,4 +71,13 @@ final Map<String, String> en = {
   'gift': 'Gift',
   'sortBy': 'Sort by',
   'amount': 'Amount',
+  'today': 'Today',
+  'thisWeek': 'This Week',
+  'profile': 'Profile',
+  'name': 'Name',
+  'editName': 'Edit Name',
+  'enterName': 'Enter your name',
+  'save': 'Save',
+  'appInfo': 'App Info',
+  'version': 'Version',
 };

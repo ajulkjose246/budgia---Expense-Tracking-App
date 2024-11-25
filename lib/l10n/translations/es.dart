@@ -71,4 +71,13 @@ final Map<String, String> es = {
   'gift': 'Regalo',
   'sortBy': 'Ordenar por',
   'amount': 'Cantidad',
+  'today': 'Hoy',
+  'thisWeek': 'Esta Semana',
+  'profile': 'Perfil',
+  'name': 'Nombre',
+  'editName': 'Editar Nombre',
+  'enterName': 'Ingrese su nombre',
+  'save': 'Guardar',
+  'appInfo': 'Información de la App',
+  'version': 'Versión',
 };

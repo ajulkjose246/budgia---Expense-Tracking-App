@@ -466,11 +466,19 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   LineChartData _getLineChartData() {
     final daysToShow = _selectedTimeRange == '30D' ? 30 : 7;
 
+    // Calculate a reasonable interval based on the data range
+    final maxY = [
+      ..._weeklyExpenseSpots.map((spot) => spot.y),
+      ..._weeklyIncomeSpots.map((spot) => spot.y),
+    ].reduce((max, value) => value > max ? value : max);
+
+    final interval = (maxY / 5).roundToDouble(); // Show roughly 5 labels
+
     return LineChartData(
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
-        horizontalInterval: 100,
+        horizontalInterval: interval,
         getDrawingHorizontalLine: (value) {
           return FlLine(
             color: Colors.white.withOpacity(0.1),
@@ -488,11 +496,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             interval: _selectedTimeRange == '30D' ? 5 : 1,
             getTitlesWidget: (value, meta) {
               if (value % (_selectedTimeRange == '30D' ? 5 : 1) == 0) {
-                return Text(
-                  '${value.toInt()}d',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
-                    fontSize: 12,
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    '${value.toInt()}d',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 12,
+                    ),
                   ),
                 );
               }
@@ -503,12 +514,17 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
+            reservedSize: 60,
+            interval: interval, // Use the calculated interval
             getTitlesWidget: (value, meta) {
-              return Text(
-                '$_currencySymbol${value.toInt()}',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 12,
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Text(
+                  '$_currencySymbol${value.toInt()}',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                  ),
                 ),
               );
             },

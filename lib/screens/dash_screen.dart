@@ -468,7 +468,10 @@ class _DashScreenState extends State<DashScreen> {
                                               BorderRadius.circular(12),
                                         ),
                                       ),
-                                      child: Text(localizations.addAccount),
+                                      child: Text(
+                                        localizations.addAccount,
+                                        style: TextStyle(color: Colors.white),
+                                      ),
                                     ),
                                   ],
                                 );
@@ -633,16 +636,17 @@ class _DashScreenState extends State<DashScreen> {
                       color: Colors.white.withOpacity(0.7),
                       fontSize: 13,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    amount,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      amount,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -660,6 +664,7 @@ class _DashScreenState extends State<DashScreen> {
     required String amount,
     required BuildContext context,
   }) {
+    final localizations = AppLocalizations.of(context);
     return Container(
       width: 160,
       padding: const EdgeInsets.all(20),
@@ -718,8 +723,8 @@ class _DashScreenState extends State<DashScreen> {
                             color: Colors.blue.withOpacity(0.2),
                           ),
                         ),
-                        title: const Text(
-                          'Delete Account',
+                        title: Text(
+                          localizations.deleteAccount,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -727,14 +732,14 @@ class _DashScreenState extends State<DashScreen> {
                           ),
                         ),
                         content: Text(
-                          'Are you sure you want to delete "$label" account?',
+                          localizations.areYouSureDelete,
                           style: const TextStyle(color: Colors.white),
                         ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
                             child: Text(
-                              'Cancel',
+                              localizations.cancel,
                               style: TextStyle(color: Colors.blue.shade300),
                             ),
                           ),
@@ -746,9 +751,9 @@ class _DashScreenState extends State<DashScreen> {
                               if (context.mounted) {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content:
-                                          Text('Account deleted successfully')),
+                                  SnackBar(
+                                      content: Text(
+                                          localizations.accountDeletedSuccess)),
                                 );
                               }
                             },
@@ -758,7 +763,10 @@ class _DashScreenState extends State<DashScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text('Delete'),
+                            child: Text(
+                              localizations.deleteAccount,
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ],
                       );
