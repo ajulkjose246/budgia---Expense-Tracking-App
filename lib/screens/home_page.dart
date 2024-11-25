@@ -30,6 +30,9 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final screenSize = MediaQuery.of(context).size;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E21),
       body: PageView(
@@ -41,48 +44,59 @@ class _HomePageState extends State<HomePage> {
         },
         children: _pages,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF0A0E21),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 20,
-              offset: const Offset(0, -10),
+      bottomNavigationBar: SizedBox(
+        height: kBottomNavigationBarHeight + bottomPadding,
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF0A0E21),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 20,
+                offset: const Offset(0, -10),
+              ),
+            ],
+          ),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
             ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-              _pageController.animateToPage(
-                index,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-              );
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Colors.blue.shade300,
-          unselectedItemColor: Colors.white.withOpacity(0.5),
-          items: [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_rounded),
-              label: localizations.home,
+            child: BottomNavigationBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              currentIndex: _selectedIndex,
+              onTap: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                  _pageController.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                });
+              },
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: Colors.blue.shade300,
+              unselectedItemColor: Colors.white.withOpacity(0.5),
+              selectedFontSize: 12,
+              unselectedFontSize: 12,
+              items: [
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.home_rounded),
+                  label: localizations.home,
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.analytics_rounded),
+                  label: localizations.statistics,
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.settings),
+                  label: localizations.settings,
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.analytics_rounded),
-              label: localizations.statistics,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: localizations.settings,
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:budgia/screens/initial_setup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:dotlottie_loader/dotlottie_loader.dart';
@@ -13,9 +15,14 @@ class IntroductionScreen extends StatefulWidget {
 class _IntroductionScreenState extends State<IntroductionScreen> {
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E21),
       body: Container(
+        width: screenSize.width,
+        height: screenSize.height,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -28,101 +35,108 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
           ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(),
-
-                // Logo/Mascot image
-                DotLottieLoader.fromAsset("assets/animations/intro.lottie",
-                    frameBuilder: (BuildContext ctx, DotLottie? dotlottie) {
-                  if (dotlottie != null) {
-                    return Lottie.memory(dotlottie.animations.values.single);
-                  } else {
-                    return Container();
-                  }
-                }),
-
-                const SizedBox(height: 24),
-
-                // App Name
-                const Text(
-                  'SaveSmart',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight:
+                    screenSize.height - MediaQuery.of(context).padding.top,
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenSize.width * 0.08,
                 ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(height: screenSize.height * 0.15),
 
-                const SizedBox(height: 8),
-
-                // Subtitle
-                Text(
-                  'Empowering You with Smart Saving\nStrategies & Budgeting Insights.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Get Started Button
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.blue.shade800,
-                        Colors.indigo.shade900,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.blue.shade900.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      if (mounted) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const InitialSetupScreen(),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
+                    // Logo/Mascot image
+                    SizedBox(
+                      height: screenSize.height * 0.25,
+                      child: DotLottieLoader.fromAsset(
+                        "assets/animations/intro.lottie",
+                        frameBuilder: (BuildContext ctx, DotLottie? dotlottie) {
+                          if (dotlottie != null) {
+                            return Lottie.memory(
+                              dotlottie.animations.values.single,
+                              fit: BoxFit.contain,
+                            );
+                          } else {
+                            return Container();
+                          }
+                        },
                       ),
                     ),
-                    child: const Text(
-                      'Get Started',
+
+                    SizedBox(height: screenSize.height * 0.05),
+
+                    // App Name
+                    Text(
+                      'SaveSmart',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: isSmallScreen ? 24 : 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                  ),
-                ),
 
-                const SizedBox(height: 48),
-              ],
+                    SizedBox(height: screenSize.height * 0.02),
+
+                    // Subtitle
+                    Text(
+                      'Empowering You with Smart Saving\nStrategies & Budgeting Insights.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 12 : 14,
+                        color: Colors.white.withOpacity(0.7),
+                        height: 1.5,
+                      ),
+                    ),
+
+                    SizedBox(height: screenSize.height * 0.08),
+
+                    // Get Started Button
+                    Container(
+                      width: double.infinity,
+                      constraints: BoxConstraints(
+                        maxWidth: min(screenSize.width * 0.85, 300),
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (mounted) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const InitialSetupScreen(),
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue.shade700,
+                          padding: EdgeInsets.symmetric(
+                            vertical: screenSize.height * 0.018,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 4,
+                        ),
+                        child: Text(
+                          'Get Started',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 14 : 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: screenSize.height * 0.15),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

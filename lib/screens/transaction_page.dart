@@ -220,7 +220,7 @@ class _TransactionPageState extends State<TransactionPage> {
                 children: [
                   TextField(
                     style: const TextStyle(color: Colors.white),
-                    onChanged: (value) => categoryInput = value,
+                    onChanged: (value) => categoryInput = value.trim(),
                     decoration: InputDecoration(
                       hintText: localizations.categoryName,
                       hintStyle:
@@ -274,9 +274,9 @@ class _TransactionPageState extends State<TransactionPage> {
                     style: TextStyle(color: Colors.white),
                   ),
                   onPressed: () {
-                    if (categoryInput.isNotEmpty) {
-                      Navigator.of(context).pop(categoryInput);
-                      categoryIcons[categoryInput] = selectedIcon;
+                    if (categoryInput.trim().isNotEmpty) {
+                      Navigator.of(context).pop(categoryInput.trim());
+                      categoryIcons[categoryInput.trim()] = selectedIcon;
                     }
                   },
                 ),
@@ -287,34 +287,58 @@ class _TransactionPageState extends State<TransactionPage> {
       },
     );
 
-    if (newCategoryName != null && newCategoryName.isNotEmpty) {
+    if (newCategoryName != null && newCategoryName.trim().isNotEmpty) {
       final categoryBox = await Hive.openBox<CategoryModel>('categories');
       // Convert the category name to a key format (lowercase, no spaces)
       final categoryNameKey =
-          newCategoryName.toLowerCase().replaceAll(' ', '_');
+          newCategoryName.trim().toLowerCase().replaceAll(' ', '_');
       final categoryKey = widget.isExpense
           ? 'expense_$categoryNameKey'
           : 'income_$categoryNameKey';
 
       // Create the new category with the key name
       final newCategory = CategoryModel(
-        name: categoryNameKey, // Store the key instead of the translated name
-        iconCode: (categoryIcons[newCategoryName] ?? Icons.category).codePoint,
+        name: categoryNameKey,
+        iconCode:
+            (categoryIcons[newCategoryName.trim()] ?? Icons.category).codePoint,
         isExpense: widget.isExpense,
       );
 
       // Store the new category
       await categoryBox.put(categoryKey, newCategory);
 
-      // Update the UI with the translated name
+      // Update the UI with the display name
       setState(() {
         if (widget.isExpense) {
-          expenseCategories.add(newCategoryName);
+          expenseCategories.add(newCategoryName.trim());
         } else {
-          incomeCategories.add(newCategoryName);
+          incomeCategories.add(newCategoryName.trim());
         }
-        selectedCategory = newCategoryName;
+        selectedCategory = newCategoryName.trim();
+
+        // Add the new category to categoryIcons if not already present
+        if (!categoryIcons.containsKey(newCategoryName.trim())) {
+          categoryIcons[newCategoryName.trim()] = Icons.category;
+        }
       });
+
+      // Add the new category mapping to reverseTranslations when creating the transaction
+      if (context.mounted) {
+        final localizations = AppLocalizations.of(context);
+        Map<String, String> reverseTranslations = {
+          localizations.Shopping: 'shopping',
+          localizations.foodAndDrinks: 'food_drinks',
+          localizations.Transportation: 'transportation',
+          localizations.Entertainment: 'entertainment',
+          localizations.billsAndUtilities: 'bills_utilities',
+          localizations.Others: 'others',
+          localizations.salary: 'salary',
+          localizations.investment: 'investment',
+          localizations.gift: 'gift',
+          newCategoryName.trim():
+              categoryNameKey, // Add the new category mapping
+        };
+      }
     }
   }
 
@@ -330,6 +354,8 @@ class _TransactionPageState extends State<TransactionPage> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E21),
@@ -346,13 +372,13 @@ class _TransactionPageState extends State<TransactionPage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(screenSize.width * 0.05),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Amount Field
+            // Amount Field with responsive padding and font size
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(screenSize.width * 0.06),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -370,7 +396,10 @@ class _TransactionPageState extends State<TransactionPage> {
               ),
               child: TextField(
                 controller: _amountController,
-                style: const TextStyle(color: Colors.white, fontSize: 32),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isSmallScreen ? 24 : 32,
+                ),
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: '0.00',
@@ -385,17 +414,17 @@ class _TransactionPageState extends State<TransactionPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: screenSize.height * 0.03),
 
-            // Category Selection
+            // Category Selection with responsive text sizes
             Text(
               localizations.category,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.7),
-                fontSize: 16,
+                fontSize: isSmallScreen ? 14 : 16,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: screenSize.height * 0.015),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
@@ -410,6 +439,9 @@ class _TransactionPageState extends State<TransactionPage> {
                       child: DropdownButton<String>(
                         value: selectedCategory,
                         dropdownColor: const Color(0xFF0A0E21),
+                        isExpanded: true,
+                        icon: Icon(Icons.arrow_drop_down,
+                            color: Colors.white.withOpacity(0.7)),
                         style:
                             const TextStyle(color: Colors.white, fontSize: 16),
                         hint: Text(
@@ -424,20 +456,106 @@ class _TransactionPageState extends State<TransactionPage> {
                           return DropdownMenuItem<String>(
                             value: value,
                             child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Icon(
-                                  categoryIcons[value] ?? Icons.category,
-                                  color: Colors.white,
-                                  size: 20,
+                                Row(
+                                  children: [
+                                    Icon(
+                                      categoryIcons[value] ?? Icons.category,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(value),
+                                  ],
                                 ),
-                                const SizedBox(width: 12),
-                                Text(value),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.delete,
+                                    color: Colors.red.withOpacity(0.7),
+                                    size: 20,
+                                  ),
+                                  onPressed: () async {
+                                    // Show confirmation dialog
+                                    final shouldDelete = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        backgroundColor:
+                                            const Color(0xFF0A0E21),
+                                        title: Text(
+                                          localizations.deleteCategory,
+                                          style: const TextStyle(
+                                              color: Colors.white),
+                                        ),
+                                        content: Text(
+                                          localizations
+                                              .deleteCategoryConfirmation(
+                                                  value),
+                                          style: const TextStyle(
+                                              color: Colors.white),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            child: Text(
+                                              localizations.cancel,
+                                              style: const TextStyle(
+                                                  color: Colors.white),
+                                            ),
+                                            onPressed: () =>
+                                                Navigator.of(context)
+                                                    .pop(false),
+                                          ),
+                                          TextButton(
+                                            child: Text(
+                                              localizations.delete,
+                                              style: const TextStyle(
+                                                  color: Colors.red),
+                                            ),
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(true),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (shouldDelete == true) {
+                                      final categoryBox =
+                                          await Hive.openBox<CategoryModel>(
+                                              'categories');
+                                      final categoryNameKey = value
+                                          .toLowerCase()
+                                          .replaceAll(' ', '_');
+                                      final categoryKey = widget.isExpense
+                                          ? 'expense_$categoryNameKey'
+                                          : 'income_$categoryNameKey';
+
+                                      await categoryBox.delete(categoryKey);
+
+                                      if (mounted) {
+                                        setState(() {
+                                          if (widget.isExpense) {
+                                            expenseCategories.remove(value);
+                                          } else {
+                                            incomeCategories.remove(value);
+                                          }
+                                          if (selectedCategory == value) {
+                                            selectedCategory = null;
+                                          }
+                                          categoryIcons.remove(value);
+                                        });
+                                        Navigator.of(context).pop();
+                                      }
+                                    }
+                                  },
+                                ),
                               ],
                             ),
                           );
                         }).toList(),
                         onChanged: (String? newValue) {
-                          setState(() => selectedCategory = newValue);
+                          setState(() {
+                            selectedCategory = newValue;
+                          });
                         },
                       ),
                     ),
@@ -540,7 +658,7 @@ class _TransactionPageState extends State<TransactionPage> {
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(screenSize.width * 0.05),
           child: ElevatedButton(
             onPressed: () async {
               if (_amountController.text.isEmpty || selectedCategory == null) {
@@ -575,18 +693,73 @@ class _TransactionPageState extends State<TransactionPage> {
                   return;
                 }
               }
-
               // Get the category icon and color
               final categoryBox =
                   await Hive.openBox<CategoryModel>('categories');
+              final localizations = AppLocalizations.of(context);
+
+              // Create reverse mapping from translated names to original keys
+              Map<String, String> reverseTranslations = {
+                localizations.Shopping: 'shopping',
+                localizations.foodAndDrinks: 'food_drinks',
+                localizations.Transportation: 'transportation',
+                localizations.Entertainment: 'entertainment',
+                localizations.billsAndUtilities: 'bills_utilities',
+                localizations.Others: 'others',
+                localizations.salary: 'salary',
+                localizations.investment: 'investment',
+                localizations.gift: 'gift',
+              };
+
+              // Add custom categories to the reverse translations
+              for (var category in categoryBox.values) {
+                final displayName = widget.isExpense
+                    ? expenseCategories.firstWhere(
+                        (e) =>
+                            e.toLowerCase().replaceAll(' ', '_') ==
+                            category.name,
+                        orElse: () => category.name)
+                    : incomeCategories.firstWhere(
+                        (e) =>
+                            e.toLowerCase().replaceAll(' ', '_') ==
+                            category.name,
+                        orElse: () => category.name);
+                reverseTranslations[displayName] = category.name;
+              }
+
+              print('Selected Category: $selectedCategory');
+              print('Available translations:');
+              reverseTranslations.forEach((key, value) {
+                print('$key -> $value');
+              });
+
+              // Get the original category key from the translated name
+              final originalKey = reverseTranslations[selectedCategory];
+              print('Found original key: $originalKey');
+
+              if (originalKey == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text(
+                          'Cannot find original key for category: $selectedCategory')),
+                );
+                return;
+              }
+
+              // Construct the full category key
               final categoryKey = widget.isExpense
-                  ? 'expense_$selectedCategory'
-                  : 'income_$selectedCategory';
+                  ? 'expense_$originalKey'
+                  : 'income_$originalKey';
+              print('Looking for category with key: $categoryKey');
+
               final category = categoryBox.get(categoryKey);
+              print('Found category: ${category?.name}');
 
               if (category == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Category not found')),
+                  SnackBar(
+                      content: Text(
+                          'Category not found: $selectedCategory (key: $categoryKey)')),
                 );
                 return;
               }
@@ -629,8 +802,8 @@ class _TransactionPageState extends State<TransactionPage> {
               widget.isExpense
                   ? localizations.newExpense
                   : localizations.newIncome,
-              style: const TextStyle(
-                fontSize: 16,
+              style: TextStyle(
+                fontSize: isSmallScreen ? 14 : 16,
                 color: Colors.white,
               ),
             ),

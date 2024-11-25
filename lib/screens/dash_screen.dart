@@ -83,6 +83,8 @@ class _DashScreenState extends State<DashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
     final localizations = AppLocalizations.of(context);
     final List<Map<String, dynamic>> accountIcons = [
       {'icon': Icons.account_balance, 'color': Colors.blue},
@@ -109,8 +111,10 @@ class _DashScreenState extends State<DashScreen> {
       child: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            padding: EdgeInsets.symmetric(
+              horizontal: screenSize.width * 0.05,
+              vertical: screenSize.height * 0.02,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -141,9 +145,9 @@ class _DashScreenState extends State<DashScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 30),
+                SizedBox(height: screenSize.height * 0.03),
 
-                // Updated Balance Card
+                // Updated Balance Card with responsive sizing
                 Consumer<AccountsProvider>(
                   builder: (context, accountsProvider, child) {
                     double totalBalance = accountsProvider.accounts
@@ -151,7 +155,7 @@ class _DashScreenState extends State<DashScreen> {
 
                     return Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.all(screenSize.width * 0.06),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -173,17 +177,17 @@ class _DashScreenState extends State<DashScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 12),
+                          SizedBox(height: screenSize.height * 0.01),
                           Text(
                             '$_currencySymbol${totalBalance.toStringAsFixed(2)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.white,
-                              fontSize: 32,
+                              fontSize: isSmallScreen ? 24 : 32,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          SizedBox(height: screenSize.height * 0.02),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -210,7 +214,7 @@ class _DashScreenState extends State<DashScreen> {
                   },
                 ),
 
-                const SizedBox(height: 30),
+                SizedBox(height: screenSize.height * 0.03),
 
                 // Accounts section header with add button
                 Row(
@@ -500,46 +504,50 @@ class _DashScreenState extends State<DashScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      Consumer<AccountsProvider>(
-                        builder: (context, accountsProvider, child) {
-                          final accounts = accountsProvider.accounts;
+                SizedBox(height: screenSize.height * 0.03),
+                // Updated Quick Actions scrolling section
+                SizedBox(
+                  height: screenSize.height * 0.22,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        Consumer<AccountsProvider>(
+                          builder: (context, accountsProvider, child) {
+                            final accounts = accountsProvider.accounts;
 
-                          if (accounts.isEmpty) {
-                            return Text(
-                              localizations
-                                  .noAccountsYet, // Changed from 'No accounts yet'
-                              style: const TextStyle(color: Colors.white),
-                            );
-                          }
-
-                          return Row(
-                            children: accounts.map((account) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 16.0),
-                                child: _buildQuickAction(
-                                  icon: IconData(account.iconIndex,
-                                      fontFamily: 'MaterialIcons'),
-                                  label: account.name,
-                                  color: Color(account.colorValue),
-                                  amount:
-                                      '$_currencySymbol${account.balance.toStringAsFixed(2)}',
-                                  context: context,
-                                ),
+                            if (accounts.isEmpty) {
+                              return Text(
+                                localizations.noAccountsYet,
+                                style: const TextStyle(color: Colors.white),
                               );
-                            }).toList(),
-                          );
-                        },
-                      ),
-                    ],
+                            }
+
+                            return Row(
+                              children: accounts.map((account) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 16.0),
+                                  child: _buildQuickAction(
+                                    icon: IconData(account.iconIndex,
+                                        fontFamily: 'MaterialIcons'),
+                                    label: account.name,
+                                    color: Color(account.colorValue),
+                                    amount:
+                                        '$_currencySymbol${account.balance.toStringAsFixed(2)}',
+                                    context: context,
+                                    isSmallScreen: isSmallScreen,
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                SizedBox(height: screenSize.height * 0.03),
 
                 // Recent Transactions
                 Row(
@@ -569,7 +577,7 @@ class _DashScreenState extends State<DashScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: screenSize.height * 0.03),
                 if (_recentTransactions.isEmpty)
                   Text(
                     localizations.noRecentTransactions,
@@ -663,11 +671,14 @@ class _DashScreenState extends State<DashScreen> {
     required Color color,
     required String amount,
     required BuildContext context,
+    required bool isSmallScreen,
   }) {
+    final screenSize = MediaQuery.of(context).size;
     final localizations = AppLocalizations.of(context);
+
     return Container(
-      width: 160,
-      padding: const EdgeInsets.all(20),
+      width: screenSize.width * (isSmallScreen ? 0.4 : 0.35),
+      padding: EdgeInsets.all(screenSize.width * 0.04),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -785,9 +796,9 @@ class _DashScreenState extends State<DashScreen> {
           // Amount
           Text(
             amount,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: isSmallScreen ? 16 : 20,
               fontWeight: FontWeight.bold,
             ),
             overflow: TextOverflow.ellipsis,
@@ -870,9 +881,14 @@ class _DashScreenState extends State<DashScreen> {
     required String amount,
     required Color iconColor,
   }) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 360;
+
+    // Determine if it's an expense based on the amount string starting with '-'
+    final isExpense = amount.startsWith('-');
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(20),
@@ -919,9 +935,9 @@ class _DashScreenState extends State<DashScreen> {
           const SizedBox(width: 8),
           Text(
             amount,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
+            style: TextStyle(
+              color: isExpense ? Colors.red : Colors.green,
+              fontSize: isSmallScreen ? 14 : 16,
               fontWeight: FontWeight.bold,
             ),
           ),

@@ -58,18 +58,19 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     required String account,
     required IconData accountIcon,
     required Color accountColor,
+    required bool isSmallScreen,
   }) {
     return Dismissible(
-      key: ValueKey(
-          'transaction.id'), // Assuming 'transaction.id' is a placeholder for a unique identifier
+      key: ValueKey('transaction.id'),
       background: Container(
         decoration: BoxDecoration(
           color: Colors.redAccent.withOpacity(0.2),
           borderRadius: BorderRadius.circular(16),
         ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete, color: Colors.redAccent),
+        padding: EdgeInsets.only(right: isSmallScreen ? 16 : 20),
+        child: Icon(Icons.delete,
+            color: Colors.redAccent, size: isSmallScreen ? 20 : 24),
       ),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
@@ -78,26 +79,28 @@ class _TransactionHistoryState extends State<TransactionHistory> {
       child: Card(
         elevation: 0,
         color: Colors.white.withOpacity(0.03),
-        margin: const EdgeInsets.only(bottom: 8),
+        margin: EdgeInsets.only(bottom: isSmallScreen ? 6 : 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         child: ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isSmallScreen ? 12 : 16,
+            vertical: isSmallScreen ? 6 : 8,
+          ),
           leading: Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
             decoration: BoxDecoration(
               color: iconColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: iconColor, size: 24),
+            child: Icon(icon, color: iconColor, size: isSmallScreen ? 20 : 24),
           ),
           title: Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: isSmallScreen ? 14 : 16,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -105,7 +108,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
             '$account ${subtitle.isNotEmpty ? ' • $subtitle' : ''}',
             style: TextStyle(
               color: Colors.white.withOpacity(0.6),
-              fontSize: 13,
+              fontSize: isSmallScreen ? 11 : 13,
             ),
           ),
           trailing: Text(
@@ -114,7 +117,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
               color: amount.startsWith('-')
                   ? Colors.redAccent
                   : Colors.greenAccent,
-              fontSize: 16,
+              fontSize: isSmallScreen ? 14 : 16,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -126,32 +129,40 @@ class _TransactionHistoryState extends State<TransactionHistory> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E21),
       body: CustomScrollView(
         slivers: [
           // App Bar
           SliverAppBar(
-            expandedHeight: 140,
+            expandedHeight: screenSize.height * 0.2, // Responsive height
             pinned: true,
             backgroundColor: const Color(0xFF0A0E21),
             iconTheme: const IconThemeData(color: Colors.white),
             title: Text(
               localizations.transactionHistory,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 20,
+                fontSize: isSmallScreen ? 18 : 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                padding: const EdgeInsets.fromLTRB(16, 60, 16, 8),
+                padding: EdgeInsets.fromLTRB(
+                  screenSize.width * 0.04,
+                  screenSize.height * 0.08,
+                  screenSize.width * 0.04,
+                  screenSize.height * 0.02,
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 8),
+                    SizedBox(height: screenSize.height * 0.02),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -160,14 +171,15 @@ class _TransactionHistoryState extends State<TransactionHistory> {
                             label: localizations.today,
                             amount:
                                 '$currencySymbol${_calculateTodaySpending().toStringAsFixed(2)}',
+                            isSmallScreen: isSmallScreen,
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: screenSize.width * 0.02),
                           _buildSummaryChip(
                             label: localizations.thisWeek,
                             amount:
                                 '$currencySymbol${_calculateWeekSpending().toStringAsFixed(2)}',
+                            isSmallScreen: isSmallScreen,
                           ),
-                          const SizedBox(width: 8),
                         ],
                       ),
                     ),
@@ -188,9 +200,12 @@ class _TransactionHistoryState extends State<TransactionHistory> {
             ),
           ),
 
-          // Transaction List
+          // Transaction List with responsive padding
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(
+              horizontal: screenSize.width * 0.04,
+              vertical: screenSize.height * 0.01,
+            ),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
@@ -207,6 +222,7 @@ class _TransactionHistoryState extends State<TransactionHistory> {
                     accountIcon: IconData(transaction.accountIconIndex,
                         fontFamily: 'MaterialIcons'),
                     accountColor: Color(transaction.accountColorValue),
+                    isSmallScreen: isSmallScreen,
                   );
                 },
                 childCount: transactions.length,
@@ -218,10 +234,15 @@ class _TransactionHistoryState extends State<TransactionHistory> {
     );
   }
 
-  Widget _buildSummaryChip({required String label, required String amount}) {
+  Widget _buildSummaryChip({
+    required String label,
+    required String amount,
+    required bool isSmallScreen,
+  }) {
+    final screenSize = MediaQuery.of(context).size;
     return Container(
-      width: 150,
-      padding: const EdgeInsets.all(12),
+      width: screenSize.width * (isSmallScreen ? 0.4 : 0.35),
+      padding: EdgeInsets.all(screenSize.width * 0.03),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
@@ -236,15 +257,15 @@ class _TransactionHistoryState extends State<TransactionHistory> {
             label,
             style: TextStyle(
               color: Colors.white.withOpacity(0.7),
-              fontSize: 13,
+              fontSize: isSmallScreen ? 12 : 13,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: screenSize.height * 0.005),
           Text(
             amount,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 18,
+              fontSize: isSmallScreen ? 16 : 18,
               fontWeight: FontWeight.w600,
             ),
           ),

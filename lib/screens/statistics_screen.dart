@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:budgia/services/storage_service.dart';
@@ -111,9 +113,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }).toList();
   }
 
-  Widget _buildTimeRangeSelector() {
+  Widget _buildTimeRangeSelector(bool isSmallScreen) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmallScreen ? 2 : 4,
+        vertical: isSmallScreen ? 2 : 4,
+      ),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
@@ -130,11 +135,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               });
             },
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 2 : 4),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 16 : 20,
+                  vertical: isSmallScreen ? 8 : 10,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? Colors.blue.shade700 : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
@@ -156,6 +163,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         : Colors.white.withOpacity(0.7),
                     fontWeight:
                         isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: isSmallScreen ? 12 : 14,
                   ),
                 ),
               ),
@@ -169,6 +177,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
 
     return Container(
       decoration: BoxDecoration(
@@ -184,11 +194,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       ),
       child: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(
+            horizontal: screenSize.width * 0.05,
+            vertical: screenSize.height * 0.02,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
+              SizedBox(height: screenSize.height * 0.02),
 
               // Header with time range selector
               Row(
@@ -197,21 +210,21 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   Flexible(
                     child: Text(
                       localizations.statistics,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 28,
+                        fontSize: isSmallScreen ? 24 : 28,
                         fontWeight: FontWeight.bold,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  _buildTimeRangeSelector(),
+                  _buildTimeRangeSelector(isSmallScreen),
                 ],
               ),
 
-              const SizedBox(height: 30),
+              SizedBox(height: screenSize.height * 0.03),
 
-              // Summary Cards
+              // Summary Cards with responsive spacing
               Row(
                 children: [
                   Expanded(
@@ -220,29 +233,31 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       amount: _calculateTotalIncome(),
                       icon: Icons.arrow_upward,
                       color: Colors.green.shade400,
+                      isSmallScreen: isSmallScreen,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: screenSize.width * 0.04),
                   Expanded(
                     child: _buildSummaryCard(
                       title: localizations.expenses,
                       amount: _calculateTotalExpenses(),
                       icon: Icons.arrow_downward,
                       color: Colors.red.shade400,
+                      isSmallScreen: isSmallScreen,
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: screenSize.height * 0.03),
 
-              // Income vs Expenses Chart
+              // Charts with responsive heights
               _buildChartContainer(
                 title: localizations.incomeVsExpenses,
                 subtitle: _selectedTimeRange == '30D'
                     ? localizations.last30Days
                     : localizations.last7Days,
-                height: 300,
+                height: screenSize.height * 0.35,
                 child: Stack(
                   children: [
                     LineChart(_getLineChartData()),
@@ -253,15 +268,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     ),
                   ],
                 ),
+                isSmallScreen: isSmallScreen,
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: screenSize.height * 0.03),
 
-              // Category Distribution
               _buildChartContainer(
                 title: localizations.spendingByCategory,
                 subtitle: localizations.distributionOfExpenses,
-                height: 400,
+                height: screenSize.height * 0.45,
                 child: Column(
                   children: [
                     Expanded(
@@ -281,9 +296,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     ),
                   ],
                 ),
+                isSmallScreen: isSmallScreen,
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: screenSize.height * 0.03),
             ],
           ),
         ),
@@ -296,9 +312,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     required double amount,
     required IconData icon,
     required Color color,
+    required bool isSmallScreen,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -318,27 +335,27 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
             decoration: BoxDecoration(
               color: color.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: isSmallScreen ? 18 : 20),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: isSmallScreen ? 8 : 12),
           Text(
             title,
             style: TextStyle(
               color: Colors.white.withOpacity(0.7),
-              fontSize: 14,
+              fontSize: isSmallScreen ? 12 : 14,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: isSmallScreen ? 2 : 4),
           Text(
             '$_currencySymbol${amount.toStringAsFixed(2)}',
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 24,
+              fontSize: isSmallScreen ? 20 : 24,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -470,9 +487,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final maxY = [
       ..._weeklyExpenseSpots.map((spot) => spot.y),
       ..._weeklyIncomeSpots.map((spot) => spot.y),
-    ].reduce((max, value) => value > max ? value : max);
+    ].fold(0.0, (max, value) => value > max ? value : max);
 
-    final interval = (maxY / 5).roundToDouble(); // Show roughly 5 labels
+    // Add a minimum interval of 1.0 to prevent zero interval
+    final interval = max((maxY / 5).roundToDouble(), 1.0);
 
     return LineChartData(
       gridData: FlGridData(
@@ -568,64 +586,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     required String subtitle,
     required double height,
     required Widget child,
+    required bool isSmallScreen,
   }) {
-    if (title == 'Income vs Expenses') {
-      return Container(
-        height: height,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.blue.shade800.withOpacity(0.2),
-              Colors.indigo.shade900.withOpacity(0.2),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: Colors.blue.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: Stack(
-                children: [
-                  LineChart(_getLineChartData()),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: _buildChartLegend(),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
     return Container(
       height: height,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -646,9 +611,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 18,
+              fontSize: isSmallScreen ? 16 : 18,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -656,10 +621,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             subtitle,
             style: TextStyle(
               color: Colors.white.withOpacity(0.7),
-              fontSize: 14,
+              fontSize: isSmallScreen ? 12 : 14,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: isSmallScreen ? 12 : 16),
           Expanded(child: child),
         ],
       ),

@@ -107,6 +107,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
 
     return Container(
       decoration: BoxDecoration(
@@ -128,334 +130,182 @@ class _SettingsScreenState extends State<SettingsScreen> {
           automaticallyImplyLeading: false,
           title: Text(
             localizations.settings,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: isSmallScreen ? 18 : 20,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
         body: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.symmetric(
+            horizontal: screenSize.width * 0.05,
+            vertical: screenSize.height * 0.02,
+          ),
           children: [
             _buildSectionHeader(localizations.profile),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
-                ),
-              ),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+            _buildSettingsContainer(
+              children: [
+                _buildSettingsTile(
+                  icon: Icons.person,
+                  iconColor: Colors.purple.shade300,
+                  title: localizations.name,
+                  subtitle: _userName,
+                  trailing: Icon(
+                    Icons.edit,
+                    color: Colors.white.withOpacity(0.5),
+                    size: MediaQuery.of(context).size.width < 360 ? 14 : 16,
                   ),
-                  child: Icon(Icons.person, color: Colors.purple.shade300),
+                  onTap: () => _showNameEditDialog(),
                 ),
-                title: Text(
-                  localizations.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: Text(
-                  _userName,
-                  style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                ),
-                trailing: Icon(
-                  Icons.edit,
-                  color: Colors.white.withOpacity(0.5),
-                  size: 16,
-                ),
-                onTap: () => _showNameEditDialog(),
-              ),
+              ],
             ),
             const SizedBox(height: 24),
             _buildSectionHeader(localizations.security),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
-                ),
-              ),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.fingerprint, color: Colors.blue.shade300),
-                ),
-                title: Text(
-                  localizations.systemLock,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: Text(
-                  localizations.requirePassword,
-                  style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                ),
-                trailing: Switch(
-                  value: _systemLockEnabled,
-                  onChanged: (value) async {
-                    if (!_canCheckBiometrics) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(localizations.biometricNotAvailable),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-
-                    try {
-                      final authenticated = await _localAuth.authenticate(
-                        localizedReason: value
-                            ? 'Please authenticate to enable system lock'
-                            : 'Please authenticate to disable system lock',
-                        options: const AuthenticationOptions(
-                          stickyAuth: true,
-                          biometricOnly: false,
-                          useErrorDialogs: true,
-                        ),
-                      );
-
-                      if (authenticated) {
-                        setState(() => _systemLockEnabled = value);
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool('system_lock_enabled', value);
-
+            _buildSettingsContainer(
+              children: [
+                _buildSettingsTile(
+                  icon: Icons.fingerprint,
+                  iconColor: Colors.blue.shade300,
+                  title: localizations.systemLock,
+                  subtitle: localizations.requirePassword,
+                  trailing: Switch(
+                    value: _systemLockEnabled,
+                    onChanged: (value) async {
+                      if (!_canCheckBiometrics) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(value
-                                ? 'System lock enabled successfully'
-                                : 'System lock disabled successfully'),
-                            backgroundColor: Colors.green,
+                            content: Text(localizations.biometricNotAvailable),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
+                      try {
+                        final authenticated = await _localAuth.authenticate(
+                          localizedReason: value
+                              ? 'Please authenticate to enable system lock'
+                              : 'Please authenticate to disable system lock',
+                          options: const AuthenticationOptions(
+                            stickyAuth: true,
+                            biometricOnly: false,
+                            useErrorDialogs: true,
+                          ),
+                        );
+
+                        if (authenticated) {
+                          setState(() => _systemLockEnabled = value);
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('system_lock_enabled', value);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(value
+                                  ? 'System lock enabled successfully'
+                                  : 'System lock disabled successfully'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } on PlatformException catch (e) {
+                        print('Authentication error: ${e.message}');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Authentication error: ${e.message}'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } catch (e) {
+                        print('Generic error: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('An error occurred: $e'),
+                            backgroundColor: Colors.red,
                           ),
                         );
                       }
-                    } on PlatformException catch (e) {
-                      print('Authentication error: ${e.message}');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Authentication error: ${e.message}'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    } catch (e) {
-                      print('Generic error: $e');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('An error occurred: $e'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                  activeColor: Colors.blue.shade300,
+                    },
+                    activeColor: Colors.blue.shade300,
+                  ),
                 ),
-              ),
+              ],
             ),
             const SizedBox(height: 24),
             _buildSectionHeader(localizations.preferences),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
+            _buildSettingsContainer(
+              children: [
+                _buildSettingsTile(
+                  icon: Icons.currency_exchange,
+                  iconColor: Colors.orange.shade300,
+                  title: localizations.currency,
+                  subtitle: '${localizations.selected}: $_selectedCurrency',
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.white.withOpacity(0.5),
+                    size: 16,
+                  ),
+                  onTap: () => _showCurrencyPicker(),
                 ),
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.currency_exchange,
-                          color: Colors.orange.shade300),
-                    ),
-                    title: Text(
-                      localizations.currency,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      '${localizations.selected}: $_selectedCurrency',
-                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                    ),
-                    trailing: Icon(
-                      Icons.arrow_forward_ios,
-                      color: Colors.white.withOpacity(0.5),
-                      size: 16,
-                    ),
-                    onTap: () => _showCurrencyPicker(),
-                  ),
-                  Divider(color: Colors.white.withOpacity(0.1)),
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.purple.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child:
-                          Icon(Icons.language, color: Colors.purple.shade300),
-                    ),
-                    title: Text(
-                      localizations.language,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
+                Divider(color: Colors.white.withOpacity(0.1)),
+                _buildSettingsTile(
+                  icon: Icons.language,
+                  iconColor: Colors.purple.shade300,
+                  title: localizations.language,
+                  subtitle:
                       '${localizations.selected}: ${LanguageUtils.languages.firstWhere(
-                        (lang) => lang['code'] == _selectedLanguage,
-                        orElse: () => {'code': 'en', 'name': 'English'},
-                      )['name']}',
-                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                    ),
-                    trailing: Icon(
-                      Icons.arrow_forward_ios,
-                      color: Colors.white.withOpacity(0.5),
-                      size: 16,
-                    ),
-                    onTap: () => _showLanguagePicker(),
+                    (lang) => lang['code'] == _selectedLanguage,
+                    orElse: () => {'code': 'en', 'name': 'English'},
+                  )['name']}',
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.white.withOpacity(0.5),
+                    size: 16,
                   ),
-                ],
-              ),
+                  onTap: () => _showLanguagePicker(),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             _buildSectionHeader(localizations.dataManagement),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
+            _buildSettingsContainer(
+              children: [
+                _buildSettingsTile(
+                  icon: Icons.backup,
+                  iconColor: Colors.blue.shade300,
+                  title: localizations.backupData,
+                  subtitle: localizations.backupData,
+                  onTap: () => _backupData(),
                 ),
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.backup, color: Colors.blue.shade300),
-                    ),
-                    title: Text(
-                      localizations.backupData,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      localizations.backupData,
-                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                    ),
-                    onTap: () => _backupData(),
-                  ),
-                  Divider(color: Colors.white.withOpacity(0.1)),
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.restore, color: Colors.green.shade300),
-                    ),
-                    title: Text(
-                      localizations.restoreData,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      localizations.importData,
-                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                    ),
-                    onTap: () => _restoreData(),
-                  ),
-                  Divider(color: Colors.white.withOpacity(0.1)),
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.delete_forever,
-                          color: Colors.red.shade300),
-                    ),
-                    title: Text(
-                      localizations.eraseAllData,
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      localizations.cannotBeUndone,
-                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                    ),
-                    onTap: () => _showEraseConfirmationDialog(),
-                  ),
-                ],
-              ),
+                Divider(color: Colors.white.withOpacity(0.1)),
+                _buildSettingsTile(
+                  icon: Icons.restore,
+                  iconColor: Colors.green.shade300,
+                  title: localizations.restoreData,
+                  subtitle: localizations.importData,
+                  onTap: () => _restoreData(),
+                ),
+                Divider(color: Colors.white.withOpacity(0.1)),
+                _buildSettingsTile(
+                  icon: Icons.delete_forever,
+                  iconColor: Colors.red.shade300,
+                  title: localizations.eraseAllData,
+                  subtitle: localizations.cannotBeUndone,
+                  onTap: () => _showEraseConfirmationDialog(),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             _buildSectionHeader(localizations.appInfo),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
+            _buildSettingsContainer(
+              children: [
+                _buildSettingsTile(
+                  icon: Icons.info_outline,
+                  iconColor: Colors.teal.shade300,
+                  title: localizations.version,
+                  subtitle: _appVersion,
                 ),
-              ),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.teal.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.info_outline, color: Colors.teal.shade300),
-                ),
-                title: Text(
-                  localizations.version,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: Text(
-                  _appVersion,
-                  style: TextStyle(color: Colors.white.withOpacity(0.5)),
-                ),
-              ),
+              ],
             ),
           ],
         ),
@@ -464,16 +314,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 360;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(
+        bottom: isSmallScreen ? 8 : 12,
+      ),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white,
-          fontSize: 20,
+          fontSize: isSmallScreen ? 18 : 20,
           fontWeight: FontWeight.bold,
         ),
       ),
+    );
+  }
+
+  Widget _buildSettingsContainer({required List<Widget> children}) {
+    final screenSize = MediaQuery.of(context).size;
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: screenSize.height * 0.03),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+        ),
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildSettingsTile({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 360;
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: isSmallScreen ? 12 : 16,
+        vertical: isSmallScreen ? 4 : 8,
+      ),
+      leading: Container(
+        padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
+        decoration: BoxDecoration(
+          color: iconColor.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          icon,
+          color: iconColor,
+          size: isSmallScreen ? 20 : 24,
+        ),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: isSmallScreen ? 14 : 16,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.5),
+          fontSize: isSmallScreen ? 12 : 14,
+        ),
+      ),
+      trailing: trailing,
+      onTap: onTap,
     );
   }
 
@@ -850,6 +765,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _showNameEditDialog() {
     final localizations = AppLocalizations.of(context);
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
     final TextEditingController controller =
         TextEditingController(text: _userName);
 
@@ -866,19 +783,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           title: Text(
             localizations.editName,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: isSmallScreen ? 18 : 20,
+            ),
           ),
-          content: TextField(
-            controller: controller,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: localizations.enterName,
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.purple.withOpacity(0.2)),
+          contentPadding: EdgeInsets.all(screenSize.width * 0.05),
+          content: SizedBox(
+            width: screenSize.width * 0.8,
+            child: TextField(
+              controller: controller,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: isSmallScreen ? 14 : 16,
               ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.purple),
+              decoration: InputDecoration(
+                hintText: localizations.enterName,
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.purple.withOpacity(0.2)),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.purple),
+                ),
               ),
             ),
           ),

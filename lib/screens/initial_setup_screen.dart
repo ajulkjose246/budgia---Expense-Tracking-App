@@ -19,6 +19,9 @@ class _InitialSetupScreenState extends State<InitialSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -36,16 +39,19 @@ class _InitialSetupScreenState extends State<InitialSetupScreen> {
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: EdgeInsets.symmetric(
+                horizontal: screenSize.width * 0.06,
+                vertical: screenSize.height * 0.02,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
-                  // Updated Welcome Text styling
+                  SizedBox(height: screenSize.height * 0.04),
+                  // Updated Welcome Text styling with responsive font sizes
                   Text(
                     'Welcome to\nBudgia',
                     style: TextStyle(
-                      fontSize: 40,
+                      fontSize: isSmallScreen ? 32 : 40,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       height: 1.2,
@@ -58,23 +64,24 @@ class _InitialSetupScreenState extends State<InitialSetupScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: screenSize.height * 0.02),
                   Text(
                     'Let\'s personalize your experience',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: isSmallScreen ? 14 : 16,
                       color: Colors.white.withOpacity(0.7),
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  SizedBox(height: screenSize.height * 0.05),
 
-                  // Input Fields with updated styling
+                  // Input Fields with responsive spacing
                   _buildInputField(
                     controller: _nameController,
                     label: 'Your Name',
                     icon: Icons.person_outline,
+                    isSmallScreen: isSmallScreen,
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: screenSize.height * 0.03),
                   _buildDropdownField(
                     value: _selectedCurrency,
                     label: 'Currency',
@@ -82,14 +89,19 @@ class _InitialSetupScreenState extends State<InitialSetupScreen> {
                     items: CurrencyUtils.currencies.map((currency) {
                       return DropdownMenuItem<String>(
                         value: currency['code'].toString(),
-                        child:
-                            Text('${currency['name']} (${currency['symbol']})'),
+                        child: Text(
+                          '${currency['name']} (${currency['symbol']})',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 13 : 14,
+                          ),
+                        ),
                       );
                     }).toList(),
                     onChanged: (value) =>
                         setState(() => _selectedCurrency = value!),
+                    isSmallScreen: isSmallScreen,
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: screenSize.height * 0.03),
                   _buildDropdownField(
                     value: _selectedLanguage,
                     label: 'Language',
@@ -97,18 +109,24 @@ class _InitialSetupScreenState extends State<InitialSetupScreen> {
                     items: LanguageUtils.languages.map((language) {
                       return DropdownMenuItem(
                         value: language['code'],
-                        child: Text(language['name']!),
+                        child: Text(
+                          language['name']!,
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 13 : 14,
+                          ),
+                        ),
                       );
                     }).toList(),
                     onChanged: (value) =>
                         setState(() => _selectedLanguage = value!),
+                    isSmallScreen: isSmallScreen,
                   ),
-                  const SizedBox(height: 48),
+                  SizedBox(height: screenSize.height * 0.06),
 
-                  // Updated Continue Button
+                  // Updated Continue Button with responsive height
                   SizedBox(
                     width: double.infinity,
-                    height: 56,
+                    height: screenSize.height * 0.07,
                     child: ElevatedButton(
                       onPressed: _saveAndContinue,
                       style: ElevatedButton.styleFrom(
@@ -120,15 +138,17 @@ class _InitialSetupScreenState extends State<InitialSetupScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Get Started',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: isSmallScreen ? 16 : 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ),
+                  // Add bottom padding to ensure content is visible above system navigation
+                  SizedBox(height: screenSize.height * 0.02),
                 ],
               ),
             ),
@@ -138,11 +158,12 @@ class _InitialSetupScreenState extends State<InitialSetupScreen> {
     );
   }
 
-  // Updated input field styling
+  // Updated input field styling with responsiveness
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    required bool isSmallScreen,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -154,26 +175,39 @@ class _InitialSetupScreenState extends State<InitialSetupScreen> {
       ),
       child: TextField(
         controller: controller,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: isSmallScreen ? 14 : 16,
+        ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-          prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.7)),
+          labelStyle: TextStyle(
+            color: Colors.white.withOpacity(0.7),
+            fontSize: isSmallScreen ? 13 : 14,
+          ),
+          prefixIcon: Icon(
+            icon,
+            color: Colors.white.withOpacity(0.7),
+            size: isSmallScreen ? 20 : 24,
+          ),
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: isSmallScreen ? 12 : 16,
+          ),
         ),
       ),
     );
   }
 
-  // Updated dropdown styling
+  // Updated dropdown styling with responsiveness
   Widget _buildDropdownField({
     required String value,
     required String label,
     required IconData icon,
     required List<DropdownMenuItem<String>> items,
     required void Function(String?) onChanged,
+    required bool isSmallScreen,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -191,11 +225,20 @@ class _InitialSetupScreenState extends State<InitialSetupScreen> {
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-          prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.7)),
+          labelStyle: TextStyle(
+            color: Colors.white.withOpacity(0.7),
+            fontSize: isSmallScreen ? 13 : 14,
+          ),
+          prefixIcon: Icon(
+            icon,
+            color: Colors.white.withOpacity(0.7),
+            size: isSmallScreen ? 20 : 24,
+          ),
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: isSmallScreen ? 12 : 16,
+          ),
         ),
       ),
     );

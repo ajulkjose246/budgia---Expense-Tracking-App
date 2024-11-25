@@ -151,6 +151,13 @@ class AppLocalizations {
   String get save => _localizedValues[locale.languageCode]!['save']!;
   String get appInfo => _localizedValues[locale.languageCode]!['appInfo']!;
   String get version => _localizedValues[locale.languageCode]!['version']!;
+  String get deleteCategory =>
+      _localizedValues[locale.languageCode]!['deleteCategory']!;
+  String get delete => _localizedValues[locale.languageCode]!['delete']!;
+
+  String deleteCategoryConfirmation(String categoryName) =>
+      _localizedValues[locale.languageCode]!['deleteCategoryConfirmation']!
+          .replaceAll('{category}', categoryName);
 }
 
 class _AppLocalizationsDelegate

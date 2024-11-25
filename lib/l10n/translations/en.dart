@@ -80,4 +80,7 @@ final Map<String, String> en = {
   'save': 'Save',
   'appInfo': 'App Info',
   'version': 'Version',
+  'deleteCategory': 'Delete Category',
+  'delete': 'Delete',
+  'deleteCategoryConfirmation': 'Are you sure you want to delete {category}?',
 };

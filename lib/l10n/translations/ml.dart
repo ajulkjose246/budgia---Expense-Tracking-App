@@ -79,4 +79,7 @@ final Map<String, String> ml = {
   'save': 'സേവ് ചെയ്യുക',
   'appInfo': 'ആപ്പ് വിവരങ്ങൾ',
   'version': 'പതിപ്പ്',
+  'deleteCategory': 'വിഭാഗം ഇല്ലാതാക്കുക',
+  'delete': 'ഇല്ലാതാക്കുക',
+  'deleteCategoryConfirmation': '{category} ഇല്ലാതാക്കണമെന്ന് തീർച്ചയാണോ?',
 };
